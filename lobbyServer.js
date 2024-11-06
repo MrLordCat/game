@@ -65,8 +65,8 @@ function handleLobby(socket, io) {
                 console.log("Room closed:", roomName);
 
                 // Очистка карты и overlay при удалении комнаты
-                clearMap();
-                clearOverlayMap(io);
+                clearMap(roomName); // Передача roomName в clearMap
+                clearOverlayMap(roomName);
             } else {
                 io.to(roomName).emit('playerLeft', { playerId: socket.id });
                 io.to(roomName).emit('updatePlayers', players[roomName]);
@@ -136,8 +136,8 @@ function handleLobby(socket, io) {
             if (room.players.length === 0) {
                 delete rooms[room.name];
                 io.to(room.name).emit('roomClosed');
-                clearMap();
-                clearOverlayMap(io);
+                clearMap(roomName); // Передача roomName в clearMap
+                clearOverlayMap(roomName);
             } else {
                 io.to(room.name).emit('playerJoined', room.players);
             }

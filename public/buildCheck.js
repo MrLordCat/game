@@ -1,4 +1,6 @@
 const buildingCheck = {
+    isBuildingConfirmationPending: false,
+
     requestBuild: function(buildingName, size) {
         console.log("Запрос на проверку постройки с именем:", buildingName);
         if (window.socket) {
@@ -9,11 +11,19 @@ const buildingCheck = {
     },
 
     confirmBuild: function(building, x, y) {
+        if (this.isBuildingConfirmationPending) {
+            console.log("Подтверждение постройки уже ожидается, запрос отменен");
+            return;
+        }
+
         console.log("Подтверждение постройки для:", building.name);
+        this.isBuildingConfirmationPending = true;
+
         if (window.socket) {
             window.socket.emit('confirmBuild', { buildingName: building.name, x, y, size: building.size });
         } else {
             console.error("Socket не инициализирован для подтверждения постройки.");
+            this.isBuildingConfirmationPending = false;
         }
     },
 
@@ -36,6 +46,12 @@ const buildingCheck = {
 
         window.socket.on('buildConfirmSuccess', ({ building, x, y }) => {
             console.log('Подтверждение постройки успешно', building, x, y);
+            this.isBuildingConfirmationPending = false;
+        });
+
+        window.socket.on('buildConfirmFailure', ({ message }) => {
+            alert(`Cannot place building: ${message}`);
+            this.isBuildingConfirmationPending = false;
         });
 
         window.socket.on('placeBuilding', ({ building, x, y }) => {
@@ -47,10 +63,6 @@ const buildingCheck = {
             };
 
             mapModule.buildingManager.placeBuilding(x, y, constructedBuilding);
-        });
-
-        window.socket.on('buildConfirmFailure', ({ message }) => {
-            alert(`Cannot place building: ${message}`);
         });
     }
 };

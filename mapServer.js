@@ -1,48 +1,28 @@
 // mapServer.js
 
-let customMapData = null; // Переменная для хранения пользовательской карты
-let mapData = generateDefaultMap(); 
-let updateMovementMap; // Переменная для функции обновления карты в модуле передвижения
+const { updateMapData } = require('./playerMovementServer'); // Подключаем updateMapData напрямую
 
-module.exports = (socket, io, updateMapFunction) => {
-    updateMovementMap = updateMapFunction; // Сохраняем функцию для обновления карты в модуле передвижения
+const roomMaps = {}; // Хранение карт по комнатам
 
-    socket.on('uploadMap', (data) => {
-        console.log("Received custom map from client:", JSON.stringify(data));
-        customMapData = convertMapFormat(data); // Конвертируем пользовательскую карту
-        console.log("Converted map format.");
-        
-        // Обновляем карту в модуле передвижения
-        updateMovementMap(customMapData);
+module.exports = (socket, io) => {
+    // Загрузка пользовательской карты для конкретной комнаты
+    socket.on('uploadMap', ({ roomName, data }) => {
+        console.log(`Received custom map for room ${roomName}`);
+        roomMaps[roomName] = convertMapFormat(data);
+        updateMapData(roomName, roomMaps[roomName]); // Напрямую обновляем карту в playerMovementServer
     });
-    socket.on('clearMap', () => {
-        customMapData = null;
-        mapData = generateDefaultMap();
-        updateMapFunction(mapData);
-        console.log('Map reset to default.');
-    });
-    socket.on('requestMap', () => {
-        console.log("Received request for map from client.");
-        
-        // Если загружена пользовательская карта, отправляем её
-        if (customMapData) {
-            socket.emit('loadMap', customMapData);
-            console.log("Custom map sent to client.");
-            updateMovementMap(customMapData); // Обновляем карту в модуле передвижения
-        } else {
-            socket.emit('loadMap', mapData);
-            console.log("Default map sent to client.");
-            updateMovementMap(mapData); // Обновляем карту в модуле передвижения
-        }
+
+
+    // Запрос карты от клиента
+    socket.on('requestMap', ({ roomName }) => {
+        console.log(`Received map request from client in room ${roomName}`);
+        const mapData = roomMaps[roomName] || generateDefaultMap();
+        socket.emit('loadMap', mapData);
+        updateMapData(roomName, mapData);
     });
 };
-module.exports.clearMap = () => {
-    customMapData = null;
-    mapData = generateDefaultMap();
-    updateMovementMap(mapData);
-    console.log('Map cleared and reset to default by external call.');
-};
-// Функция для генерации стандартной карты
+
+// Генерация карты по умолчанию
 function generateDefaultMap() {
     const mapWidth = 100;
     const mapHeight = 100;
@@ -60,10 +40,14 @@ function generateDefaultMap() {
     return mapData;
 }
 
-// Функция для преобразования пользовательской карты в нужный формат
+// Преобразование пользовательской карты в нужный формат
 function convertMapFormat(data) {
-    console.log("Starting map conversion...");
     return data.map(row => row.map(cell => cell === 1 ? { type: 'wall' } : { type: 'passage' }));
 }
-
-module.exports.getCurrentMap = () => customMapData || mapData;
+module.exports.clearMap = (roomName) => {
+    roomMaps[roomName] = generateDefaultMap();
+    updateMapData(roomName, roomMaps[roomName]);
+    console.log(`Map reset to default for room ${roomName}`);
+};
+// Функция для получения текущей карты для конкретной комнаты
+module.exports.getRoomMap = (roomName) => roomMaps[roomName] || generateDefaultMap();

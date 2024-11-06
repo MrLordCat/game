@@ -9,30 +9,29 @@ const playerPositionModule = {
     init: function() {
         console.log('Initializing player position...');
         if (!this.isInitialized) {
-            this.setupEventListeners(); // Устанавливаем подписки только один раз
+            this.setupEventListeners();
             this.isInitialized = true;
         }
         this.createPlayer();
     },
 
     createPlayer: function() {
+        const roomName = window.gameCore.lobby.roomName; // Получаем roomName
         this.playerElement = document.createElement('div');
         this.playerElement.className = 'player';
         document.getElementById('mapContainer').appendChild(this.playerElement);
         
-        window.socket.emit('initializePlayer'); // Инициализация игрока на сервере
+        window.socket.emit('initializePlayer', { roomName });
     },
 
     setupEventListeners: function() {
-        // Обработчик для обновления позиций игроков
         window.socket.on('gameStarted', () => {
             this.init();
             console.log('Game has started - player initialized');
         });
 
-        // Обработчик для обновления позиций всех игроков
         window.socket.on('updatePlayers', (players) => {
-            if (window.gameCore.gameSettings.isGameActive) { // Проверка isGameActive из gameCore
+            if (window.gameCore.gameSettings.isGameActive) {
                 this.updateOtherPlayers(players);
                 if (players[window.socket.id]) {
                     this.updatePlayerPosition(players[window.socket.id]);
@@ -44,7 +43,6 @@ const playerPositionModule = {
     updatePlayerPosition: function(position) {
         if (!window.gameCore.gameSettings.isGameActive || !this.playerElement) return;
     
-        // Обновление позиции главного игрока без смещения на половину клетки
         this.playerElement.style.position = 'absolute';
         this.playerElement.style.left = `${position.x * 10}px`;
         this.playerElement.style.top = `${position.y * 10}px`;
@@ -62,10 +60,9 @@ const playerPositionModule = {
             return;
         }
     
-        const playerId = window.gameCore.playerId; // Предполагается, что у вас есть идентификатор текущего игрока
+        const playerId = window.socket.id;
     
         for (const otherPlayerId in players) {
-            // Пропускаем самого себя
             if (otherPlayerId === playerId) continue;
     
             const playerData = players[otherPlayerId];
@@ -86,7 +83,6 @@ const playerPositionModule = {
             otherPlayerElement.style.top = `${playerData.y * 10}px`;
         }
     }
-    
 };
 
 window.playerPositionModule = playerPositionModule;

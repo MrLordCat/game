@@ -1,30 +1,32 @@
 // overlayMapServer.js
 
-const overlayMapData = []; // Хранение информации о координатах построек
-const buildingModule = require('./buildingModule'); // Импорт buildingModule
-const { players } = require('./playerMovementServer'); 
+const roomOverlays = {}; // Хранение данных overlay для каждой комнаты
+const buildingModule = require('./buildingModule');
+const { playersByRoom } = require('./playerMovementServer');
+const { getRoomMap } = require('./mapServer');
+const { updateOverlayData } = require('./playerMovementServer'); // Импортируем updateOverlayData напрямую
 
-module.exports = (socket, io, updateOverlayMap) => {
-    socket.on('clearOverlayMap', () => {
-        overlayMapData.length = 0;
-        io.emit('updateOverlayMap', overlayMapData);
-        console.log('Overlay map cleared.');
-    });
-    socket.on('requestOverlayMap', () => {
-        socket.emit('loadOverlayMap', overlayMapData);
-        console.log('Overlay map data sent to client.');
+module.exports = (socket, io) => {
+    
+
+    socket.on('requestOverlayMap', ({ roomName }) => {
+        if (!roomOverlays[roomName]) roomOverlays[roomName] = [];
+        socket.emit('loadOverlayMap', roomOverlays[roomName]);
+        console.log(`Overlay map data sent to client for room ${roomName}.`);
     });
 
-    socket.on('placeBuilding', (data) => {
-        const { x, y, building } = data;
-        const mapData = require('./mapServer').getCurrentMap();
+    socket.on('placeBuilding', ({ roomName, x, y, building }) => {
+        if (!roomOverlays[roomName]) roomOverlays[roomName] = [];
         
-        if (isPositionBlocked(x, y, building.size, mapData, players)) {
+        const mapData = getRoomMap(roomName);
+        const players = playersByRoom[roomName] || {};
+
+        if (isPositionBlocked(x, y, building.size, mapData, players, roomName)) {
             socket.emit('placementFailed', { x, y });
-            console.log(`Position (${x}, ${y}) is blocked, cannot place building.`);
+            console.log(`Position (${x}, ${y}) is blocked in room ${roomName}, cannot place building.`);
             return;
         }
-    
+
         const newBuilding = {
             x,
             y,
@@ -36,37 +38,13 @@ module.exports = (socket, io, updateOverlayMap) => {
             hasMenu: building.hasMenu,
         };
     
-        overlayMapData.push(newBuilding);
-        io.emit('updateOverlayMap', overlayMapData);
-        updateOverlayMap(overlayMapData); 
+        roomOverlays[roomName].push(newBuilding);
+        io.to(roomName).emit('updateOverlayMap', roomOverlays[roomName]);
+        updateOverlayData(roomName, roomOverlays[roomName]); // Обновляем overlay данные для playerMovementServer
     });
 
-    // Обработка запроса на получение данных о здании
-    socket.on('requestBuildingData', ({ buildingId }) => {
-        const basicBuildingData = overlayMapData.find(building => building.name === buildingId);
-        
-        if (basicBuildingData) {
-            // Используем buildingId как есть, без приведения к нижнему регистру
-            const fullBuildingData = buildingModule.buildings[buildingId] || {};
-            console.log("Данные из buildingModule для ID", buildingId, ":", fullBuildingData);
-            const buildingData = { ...basicBuildingData, ...fullBuildingData };
-            
-            socket.emit('buildingDataResponse', buildingData);
-            console.log("Отправка полных данных о здании:", buildingData);
-        } else {
-            socket.emit('buildingDataResponse', null);
-        }
-    });
-
-    socket.on('clearOverlayMap', () => {
-        overlayMapData.length = 0;
-        io.emit('updateOverlayMap', overlayMapData);
-        console.log('Overlay map cleared.');
-    });
-
-    function isPositionBlocked(x, y, size, mapData, players) {
-        // Проверка наложения на другие здания
-        const isOverlayBlocked = overlayMapData.some(building => {
+    function isPositionBlocked(x, y, size, mapData, players, roomName) {
+        const isOverlayBlocked = (roomOverlays[roomName] || []).some(building => {
             return (
                 x < building.x + building.width &&
                 x + size.width > building.x &&
@@ -76,21 +54,19 @@ module.exports = (socket, io, updateOverlayMap) => {
         });
     
         if (isOverlayBlocked) {
-            console.log(`Blocked by another building at (${x}, ${y}).`);
+            console.log(`Blocked by another building at (${x}, ${y}) in room ${roomName}.`);
             return true;
         }
     
-        // Проверка на стены карты
         for (let i = 0; i < size.width; i++) {
             for (let j = 0; j < size.height; j++) {
                 if (mapData[y + j] && mapData[y + j][x + i] && mapData[y + j][x + i].type === 'wall') {
-                    console.log(`Blocked by wall at (${x + i}, ${y + j}).`);
+                    console.log(`Blocked by wall at (${x + i}, ${y + j}) in room ${roomName}.`);
                     return true;
                 }
             }
         }
     
-        // Проверка на игроков и врагов
         const isPlayerOrEnemyBlocked = Object.values(players).some(player => {
             return (
                 x < player.x + 1 &&
@@ -101,16 +77,16 @@ module.exports = (socket, io, updateOverlayMap) => {
         });
     
         if (isPlayerOrEnemyBlocked) {
-            console.log(`Blocked by player or enemy at (${x}, ${y}).`);
+            console.log(`Blocked by player or enemy at (${x}, ${y}) in room ${roomName}.`);
             return true;
         }
     
         return false;
     }
-    
 };
-module.exports.clearOverlayMap = (io) => {
-    overlayMapData.length = 0;
-    io.emit('updateOverlayMap', overlayMapData);
-    console.log('Overlay map cleared by external call.');
+module.exports.clearOverlayMap = (roomName) => {
+    if (!roomOverlays[roomName]) roomOverlays[roomName] = [];
+    roomOverlays[roomName].length = 0;
+    updateOverlayData(roomName, roomOverlays[roomName]); // Обновляем overlay данные в playerMovementServer
+    console.log(`Overlay map cleared for room ${roomName}`);
 };

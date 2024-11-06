@@ -1,52 +1,89 @@
 // playerMovementServer.js
 
-const players = {}; 
-const moveIntervals = {}; 
-let mapData = []; 
-let overlayMapData = []; 
+const playersByRoom = {}; // Хранение игроков по комнатам
+const moveIntervals = {};
+const mapDataByRoom = {}; // Хранение основной карты по комнатам
+const overlayMapDataByRoom = {}; // Хранение overlay карт по комнатам
 
-function updateMapData(newMapData) {
-    mapData = newMapData;
-    console.log("Map data in playerMovementServer updated.");
+function updateMapData(roomName, newMapData) {
+    if (roomName) {
+        mapDataByRoom[roomName] = newMapData;
+        console.log(`Map data in playerMovementServer updated for room .`,roomName);
+    } else {
+        console.error("Error: roomName is undefined in updateMapData.");
+    }
 }
 
-function updateOverlayData(newOverlayMapData) {
-    overlayMapData = newOverlayMapData;
-    console.log("Overlay map data in playerMovementServer updated.");
+function updateOverlayData(roomName, newOverlayMapData) {
+    if (roomName) {
+        overlayMapDataByRoom[roomName] = newOverlayMapData;
+        console.log(`Overlay map data in playerMovementServer updated for room .`);
+    } else {
+        console.error("Error: roomName is undefined in updateOverlayData.");
+    }
 }
 
 function handlePlayerMovement(socket, io) {
-    socket.on('initializePlayer', () => {
-        players[socket.id] = { x: 50, y: 50 };
-        io.emit('updatePlayers', players);
+    socket.on('initializePlayer', ({ roomName }) => {
+        if (!roomName) {
+            console.error("Error: roomName not provided in initializePlayer event");
+            return;
+        }
+
+        if (!playersByRoom[roomName]) playersByRoom[roomName] = {};
+        playersByRoom[roomName][socket.id] = { x: 50, y: 50 };
+        socket.join(roomName);
+
+        io.to(roomName).emit('updatePlayers', playersByRoom[roomName]);
     });
 
-    socket.on('setTargetPosition', (targetPosition) => {
-        const player = players[socket.id];
-        if (!player) return;
+    socket.on('setTargetPosition', ({ roomName, targetPosition }) => {
+        if (!roomName || !playersByRoom[roomName]) {
+            console.error(`Error: roomName not provided or room not found in setTargetPosition for socket ${socket.id}`);
+            return;
+        }
+
+        const player = playersByRoom[roomName][socket.id];
+        if (!player) {
+            console.error(`Error: Player not found in room ${roomName} for socket ${socket.id}`);
+            return;
+        }
 
         if (moveIntervals[socket.id]) {
             clearInterval(moveIntervals[socket.id]);
         }
 
-        moveIntervals[socket.id] = movePlayerToTarget(socket, io, player, targetPosition);
+        moveIntervals[socket.id] = movePlayerToTarget(socket, io, player, targetPosition, roomName);
     });
 
     socket.on('disconnect', () => {
-        clearInterval(moveIntervals[socket.id]);
-        delete moveIntervals[socket.id];
-        delete players[socket.id];
-        io.emit('updatePlayers', players);
-        console.log(`Player ${socket.id} disconnected and removed from players list.`);
+        for (const roomName in playersByRoom) {
+            if (playersByRoom[roomName][socket.id]) {
+                clearInterval(moveIntervals[socket.id]);
+                delete moveIntervals[socket.id];
+                delete playersByRoom[roomName][socket.id];
+                io.to(roomName).emit('updatePlayers', playersByRoom[roomName]);
+                
+                if (Object.keys(playersByRoom[roomName]).length === 0) {
+                    delete playersByRoom[roomName];
+                    console.log(`Room ${roomName} is now empty.`);
+                }
+            }
+        }
     });
 }
 
-// Функция для проверки, является ли клетка стеной или содержит здание
-function isWall(x, y) {
+function isWall(x, y, roomName) {
+    const mapData = mapDataByRoom[roomName] || []; // Получаем данные карты по комнате
+    const overlayMapData = overlayMapDataByRoom[roomName] || []; // Получаем overlay карту по комнате
+
+    // Проверяем наличие стены
     if (y >= 0 && y < mapData.length && x >= 0 && x < mapData[0].length) {
         if (mapData[y][x].type === 'wall') return true;
     }
 
+    // Проверка на наложение зданий
+   // console.log("CHECK IF overlay here", overlayMapData)
     return overlayMapData.some(building => {
         return (
             x >= building.x &&
@@ -57,17 +94,14 @@ function isWall(x, y) {
     });
 }
 
-function movePlayerToTarget(socket, io, player, targetPosition) {
+function movePlayerToTarget(socket, io, player, targetPosition, roomName) {
     return setInterval(() => {
         const deltaX = targetPosition.x - player.x;
         const deltaY = targetPosition.y - player.y;
-
-        // Проверка, достигнут ли targetPosition по каждой оси
         const nextX = deltaX !== 0 ? player.x + Math.sign(deltaX) : player.x;
         const nextY = deltaY !== 0 ? player.y + Math.sign(deltaY) : player.y;
 
-        // Проверяем, не столкнется ли игрок с препятствием
-        if (isWall(nextX, nextY)) {
+        if (isWall(nextX, nextY, roomName)) {
             clearInterval(moveIntervals[socket.id]);
             delete moveIntervals[socket.id];
             return;
@@ -75,23 +109,19 @@ function movePlayerToTarget(socket, io, player, targetPosition) {
 
         player.x = nextX;
         player.y = nextY;
-        io.emit('updatePlayers', players);
-        // Если достигли цели, останавливаем передвижение
+        io.to(roomName).emit('updatePlayers', playersByRoom[roomName]);
+
         if (player.x === targetPosition.x && player.y === targetPosition.y) {
             clearInterval(moveIntervals[socket.id]);
             delete moveIntervals[socket.id];
             return;
         }
-
-      
     }, 100);
 }
-
 
 module.exports = {
     handlePlayerMovement,
     updateMapData,
     updateOverlayData,
-    isWall,
-    players
+    playersByRoom,
 };

@@ -4,7 +4,7 @@ import buildingSelectionModule from '../gameInterface/buildingSelectionModule.js
 import enemyReceiverModule from '../enemyReceiverModule.js';
 import enemyRendererModule from '../enemyRendererModule.js';
 import buildingCheck from '../buildCheck.js';
-
+import overlayMapModule from '../playingMap/overlayMap.js';
 const lobbyUI = {
     selectedMap: null,
 
@@ -17,9 +17,11 @@ const lobbyUI = {
     },
 
     uploadMapToServer: function(mapData) {
+        const roomName = window.gameCore.lobby.roomName;  // Получаем roomName
         console.log('Uploading custom map to server...');
-        window.socket.emit('uploadMap', mapData); // Отправка карты на сервер
+        window.socket.emit('uploadMap', { roomName, data: mapData }); // Отправка карты с roomName
     },
+    
     init: function() {
         document.getElementById('readyButton').addEventListener('click', () => lobbyActions.onReady());
         document.getElementById('exitLobby').addEventListener('click', () => lobbyActions.returnToMainMenu());
@@ -71,6 +73,7 @@ async onGameStarted() {
             console.log('Инициализация карты...');
             await mapModule.init(); // Просто вызываем инициализацию карты, сервер решит, какую карту отправить
         }
+        overlayMapModule.init();
         if (typeof buildingManager !== 'undefined') {
             buildingManager.init(socket, this.roomName, buildingSyncClient);
         }

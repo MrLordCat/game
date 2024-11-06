@@ -11,7 +11,7 @@ const buildingManager = require('./buildingCheck');
 const playerAttributes = require('./playerAttributes');
 const enemyManager = require('./enemyManager');
 const handleMap = require('./mapServer');
-const { handlePlayerMovement, updateMapData, updateOverlayData } = require('./playerMovementServer'); 
+const { handlePlayerMovement, updateMapData } = require('./playerMovementServer'); 
 const overlayMapServer = require('./overlayMapServer'); 
 
 const app = express();
@@ -24,9 +24,7 @@ app.use(express.static('public'));
 function updatePlayerMovementMap(newMap) {
     updateMapData(newMap);
 }
-function updatePlayerOverlayMap(newOverlayMap) {
-    updateOverlayData(newOverlayMap); // передача новых данных overlay
-}
+
 io.on('connection', (socket) => {
     console.log(`Player connected: ${socket.id}`);
     activeSockets[socket.id] = socket;
@@ -42,7 +40,7 @@ io.on('connection', (socket) => {
     roomTimerServer(io, socket); 
     playerAttributes.handleAttributes(socket);
     buildingManager.handleBuilding(socket, io);
-    overlayMapServer(socket, io, updatePlayerOverlayMap); 
+    overlayMapServer(socket, io); 
     socket.on('startGame', () => {
         console.log("Game started, initializing enemy manager...");
         enemyManager.initializeEnemyManager(io);

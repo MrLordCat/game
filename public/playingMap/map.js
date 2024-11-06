@@ -33,7 +33,8 @@ const mapModule = {
     generateMap: function() {
         return new Promise((resolve) => {
             console.log('Запрос карты с сервера...');
-            window.socket.emit('requestMap'); // Отправляем запрос на сервер
+            const roomName = window.gameCore.lobby.roomName;  // Получаем roomName
+            window.socket.emit('requestMap', { roomName }); // Отправляем запрос с roomName
             window.socket.on('loadMap', (serverMapData) => {
                 if (serverMapData && serverMapData.length > 0) {
                     this.mapData = serverMapData;
@@ -47,7 +48,7 @@ const mapModule = {
                 }
             });
         });
-    },
+    },    
 
     renderMap: function() {
         const mapContainer = document.getElementById('mapContainer');
