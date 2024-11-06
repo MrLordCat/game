@@ -1,8 +1,9 @@
 // buildingMap.js
 
 import overlayMapModule from './overlayMap.js';
+import mapModule from './map.js';
+import buildingCheck from '../buildCheck.js'; // Импорт buildingCheck
 
-import mapModule from './map.js'
 mapModule.buildingManager = {
     init: function() {
         overlayMapModule.init();  // Инициализация слоя для построек
@@ -36,9 +37,6 @@ mapModule.buildingManager = {
                 // Учитываем смещение контейнера
                 ghostBuilding.style.left = `${containerRect.left + x * 10}px`;
                 ghostBuilding.style.top = `${containerRect.top + y * 10}px`;
-
-            } else {
-               
             }
         });
 
@@ -47,7 +45,7 @@ mapModule.buildingManager = {
             if (target.classList.contains('map-cell')) {
                 const x = parseInt(target.dataset.x, 10);
                 const y = parseInt(target.dataset.y, 10);
-                buildingCheck.confirmBuild(building, x, y);
+                buildingCheck.confirmBuild(building, x, y); // Используем buildingCheck для подтверждения постройки
                 ghostBuilding.remove();
 
                 // Восстанавливаем pointer-events после завершения строительства

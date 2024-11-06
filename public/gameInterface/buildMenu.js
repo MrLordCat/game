@@ -1,3 +1,7 @@
+// buildMenu.js
+
+import buildingCheck from '../buildCheck.js';
+
 const buildMenuModule = {
     isOpen: false,
 
@@ -5,8 +9,8 @@ const buildMenuModule = {
         this.isOpen = true;
 
         // Запрашиваем данные у сервера и обновляем gameCore
-        socket.emit('requestBuildingOptions');
-        socket.on('buildingOptions', (data) => {
+        window.socket.emit('requestBuildingOptions');
+        window.socket.on('buildingOptions', (data) => {
             gameCore.updatePlayerBuildings(data); // Сохраняем данные в gameCore
             this.renderBuildingMenu();
         });
@@ -24,7 +28,7 @@ const buildMenuModule = {
                 buildButton.textContent = building.name.charAt(0);
                 buildButton.onclick = () => {
                     console.log(building.name);
-                    buildingCheck.requestBuild(building.name);
+                    buildingCheck.requestBuild(building.name); // Используем buildingCheck
                 };
                 buttonGrid.appendChild(buildButton);
                 index++;
@@ -77,3 +81,5 @@ const buildMenuModule = {
 document.getElementById("bottomInterface_buildButton").addEventListener("click", () => {
     buildMenuModule.toggleBuildMenu();
 });
+
+export default buildMenuModule;

@@ -1,3 +1,7 @@
+// bottomInterface.js
+
+import buildMenuModule from './buildMenu.js';
+
 const bottomInterfaceModule = {
     playerData: {
         xpPercentage: 100,
@@ -11,7 +15,6 @@ const bottomInterfaceModule = {
     init: function() {
         console.log('Bottom interface initialized');
         this.hideInterface();
-        
     },
 
     showInterface: function() {
@@ -23,10 +26,7 @@ const bottomInterfaceModule = {
     },
 
     updatePlayerInfo: function(playerData) {
-        // Сохраняем данные в переменную
         this.playerData = { ...playerData };
-
-        // Обновляем интерфейс
         this.updateXP(this.playerData.xpPercentage);
         this.updateHealth(this.playerData.health);
         this.updateMana(this.playerData.mana);
@@ -34,19 +34,17 @@ const bottomInterfaceModule = {
     },
 
     updateBuildingInfo: function(building) {
-        this.resetInterface(); // Сброс интерфейса перед обновлением для здания
-
-        document.getElementById('bottomInterface_xpBar').style.display = 'none'; // Скрываем шкалу XP
+        this.resetInterface();
+        document.getElementById('bottomInterface_xpBar').style.display = 'none';
         document.getElementById('bottomInterface_health').textContent = `Health: ${building.health || 'N/A'}`;
         document.getElementById('bottomInterface_strength').textContent = `Armor: ${building.armor || 'N/A'}`;
-        document.getElementById('bottomInterface_agility').textContent = ''; // Удаляем ненужные атрибуты
+        document.getElementById('bottomInterface_agility').textContent = '';
         document.getElementById('bottomInterface_intelligence').textContent = '';
         document.getElementById('bottomInterface_mana').textContent = '';
 
         const buttonGrid = document.getElementById('bottomInterface_buttonGrid');
-        buttonGrid.innerHTML = ''; // Очищаем текущие кнопки
+        buttonGrid.innerHTML = '';
 
-        // Добавляем кнопки здания, если они существуют
         if (building.hasMenu) {
             const upgradeButton = document.createElement('button');
             upgradeButton.textContent = 'Upgrade';
@@ -56,19 +54,16 @@ const bottomInterfaceModule = {
             buttonGrid.appendChild(upgradeButton);
             buttonGrid.appendChild(repairButton);
         } else {
-            // Если кнопок нет, оставляем сетку пустой
             for (let i = 0; i < 9; i++) {
                 const emptyButton = document.createElement('button');
-                emptyButton.textContent = ''; // Пустая кнопка
+                emptyButton.textContent = '';
                 buttonGrid.appendChild(emptyButton);
             }
         }
     },
 
     resetInterface: function() {
-        // Восстанавливаем вид интерфейса, не изменяя значения
         document.getElementById('bottomInterface_xpBar').style.display = 'block';
-
         this.updateXP(this.playerData.xpPercentage);
         this.updateHealth(this.playerData.health);
         this.updateMana(this.playerData.mana);

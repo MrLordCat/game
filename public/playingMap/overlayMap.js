@@ -1,10 +1,11 @@
-import buildingSelectionModule from '../gameInterface/buildingSelectionModule.js';
+// overlayMap.js
 
+import buildingSelectionModule from '../gameInterface/buildingSelectionModule.js';
 
 const overlayMapModule = {
     buildingsCoordinates: [],
+
     init: function() {
-        // Создаем контейнер для наложения
         const overlayContainer = document.createElement('div');
         overlayContainer.id = 'overlayContainer';
         overlayContainer.style.position = 'absolute';
@@ -13,63 +14,59 @@ const overlayMapModule = {
         overlayContainer.style.width = '100%';
         overlayContainer.style.height = '100%';
         document.getElementById('mapContainer').appendChild(overlayContainer);
-        
+
+        // Запрос карты с сервера при инициализации
+        window.socket.emit('requestOverlayMap');
         console.log('Overlay map initialized');
     },
 
     placeBuilding: function(x, y, building) {
+        // Отправляем запрос на сервер для размещения постройки
+        window.socket.emit('placeBuilding', { x, y, building });
+    },
+
+    renderBuildings: function(buildings) {
         const overlayContainer = document.getElementById('overlayContainer');
         if (!overlayContainer) {
             console.error('Overlay container not found. Make sure overlayMapModule.init() was called.');
             return;
         }
-        console.log(building)
-        const buildingElement = document.createElement('div');
-        buildingElement.className = `building-overlay ${building.name}`;
-        buildingElement.style.position = 'absolute';
-        buildingElement.style.width = `${building.size.width * 10}px`;
-        buildingElement.style.height = `${building.size.height * 10}px`;
-        buildingElement.style.left = `${x * 10}px`;
-        buildingElement.style.top = `${y * 10}px`;
+        overlayContainer.innerHTML = ''; // Очищаем контейнер перед рендерингом
 
-        this.buildingsCoordinates.push({ x, y, width: building.size.width, height: building.size.height });
-              // Добавляем обработчик для выбора здания
-              buildingElement.addEventListener('mouseenter', () => {
-                console.log('Mouse entered building');
-                buildingSelectionModule.hoverBuilding(buildingElement);
+        buildings.forEach(({ x, y, width, height, name }) => {
+            const buildingElement = document.createElement('div');
+            buildingElement.className = `building-overlay ${name}`;
+            buildingElement.style.position = 'absolute';
+            buildingElement.style.width = `${width * 10}px`;
+            buildingElement.style.height = `${height * 10}px`;
+            buildingElement.style.left = `${x * 10}px`;
+            buildingElement.style.top = `${y * 10}px`;
+
+            buildingElement.addEventListener('click', () => {
+                buildingSelectionModule.selectBuilding(buildingElement, name);
             });
-            
-            buildingElement.addEventListener('mouseleave', () => {
-                console.log('Mouse left building');
-                buildingSelectionModule.unhoverBuilding();
-            });
-            
-            buildingElement.addEventListener('click', (event) => {
-                event.stopPropagation();
-                console.log('Building clicked:', building);
-                buildingSelectionModule.selectBuilding(buildingElement, building.name); // Передаем только идентификатор (имя) здания
-            });
-        overlayContainer.appendChild(buildingElement);
-    },
-    isPositionBlocked: function(x, y) {
-        return this.buildingsCoordinates.some(building => {
-            return (
-                x >= building.x &&
-                x < building.x + building.width &&
-                y >= building.y &&
-                y < building.y + building.height
-            );
+
+            overlayContainer.appendChild(buildingElement);
         });
     },
 
-    clearBuilding: function() {
-        const overlayContainer = document.getElementById('overlayContainer');
-        if (overlayContainer) {
-            overlayContainer.innerHTML = ''; // Очистка всех построек, если требуется
-        }
+    clearBuildings: function() {
+        window.socket.emit('clearOverlayMap'); // Очищаем карту на сервере
         this.buildingsCoordinates = [];
-        buildingSelectionModule.deselectBuilding();
-    }
+    },
 };
+
+// Обработчики событий от сервера
+window.socket.on('loadOverlayMap', (buildings) => {
+    overlayMapModule.renderBuildings(buildings);
+});
+
+window.socket.on('updateOverlayMap', (buildings) => {
+    overlayMapModule.renderBuildings(buildings);
+});
+
+window.socket.on('placementFailed', (data) => {
+    console.log(`Cannot place building at (${data.x}, ${data.y}): Position is blocked.`);
+});
 
 export default overlayMapModule;

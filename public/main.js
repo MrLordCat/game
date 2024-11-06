@@ -1,5 +1,5 @@
 // menu.js
-
+window.socket = io();
 
 // Переменные для управления экраном
 const startScreen = document.getElementById('startScreen');

@@ -3,6 +3,7 @@ import controlsModule from '../controls.js';
 import buildingSelectionModule from '../gameInterface/buildingSelectionModule.js';
 import enemyReceiverModule from '../enemyReceiverModule.js';
 import enemyRendererModule from '../enemyRendererModule.js';
+import buildingCheck from '../buildCheck.js';
 
 const lobbyUI = {
     selectedMap: null,
@@ -103,6 +104,7 @@ async onGameStarted() {
         }
         buildingSelectionModule.init();
         controlsModule.init();
+        buildingCheck.initializeBuildCheckListeners(); 
     }
     
 };
