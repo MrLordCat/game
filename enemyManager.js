@@ -1,58 +1,64 @@
 // enemyManager.js
 
+const { isWall } = require('./playerMovementServer'); // Импортируем функцию isWall для проверки препятствий
+
 let enemies = [];
 const enemySizeOptions = [{ width: 2, height: 2 }, { width: 3, height: 3 }, { width: 4, height: 4 }];
-const spawnInterval = 30000; // Интервал спауна врагов в миллисекундах
-const moveInterval = 500; // Интервал обновления движения врагов
+const spawnInterval = 5000;
+const moveInterval = 500;
+let playerPosition = { x: 50, y: 50 }; // Переменная для хранения актуальной позиции игрока
 
 function initializeEnemyManager(io) {
     setInterval(() => updateEnemyPositions(io), moveInterval);
-    setInterval(() => spawnEnemy(io), spawnInterval);
+    setInterval(() => spawnEnemy(io, playerPosition), spawnInterval);
 }
 
-function updateEnemyTargets(playerPosition) {
-    //console.log("Updated enemy target position:", playerPosition);
+function updateEnemyTargets(newPlayerPosition) {
+    playerPosition = newPlayerPosition; // Обновляем позицию игрока
     enemies.forEach(enemy => {
         enemy.targetPosition = playerPosition;
-    //    console.log("Updated enemy target position:", playerPosition);
     });
+    console.log("Обновлена цель для врагов:", playerPosition); // Лог для проверки обновления цели
 }
 
-function spawnEnemy(io) {
+function spawnEnemy(io, playerPosition) {
     const size = enemySizeOptions[Math.floor(Math.random() * enemySizeOptions.length)];
     const newEnemy = {
         id: generateEnemyId(),
-        position: { x: 50, y: 50 }, // Центральная позиция для спауна врагов
+        position: { x: 50, y: 50 },
         size: size,
         health: 100,
         target: 'player',
-        targetPosition: { x: 50, y: 50 } // Начальная цель по умолчанию
+        targetPosition: playerPosition // Устанавливаем текущую позицию игрока как цель
     };
     enemies.push(newEnemy);
-    io.emit('newEnemy', newEnemy); // Отправляем информацию о новом враге клиентам
+    io.emit('newEnemy', newEnemy);
 }
 
 function updateEnemyPositions(io) {
     enemies.forEach((enemy) => {
         if (enemy.target === 'player' && enemy.targetPosition) {
-            moveToTarget(enemy, enemy.targetPosition);
+            moveEnemyToTarget(io, enemy, enemy.targetPosition);
         }
         io.emit('updateEnemy', { id: enemy.id, position: enemy.position });
     });
 }
 
-function moveToTarget(enemy, targetPosition) {
-    const dx = targetPosition.x - enemy.position.x;
-    const dy = targetPosition.y - enemy.position.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+// Функция движения врагов с учетом препятствий
+function moveEnemyToTarget(io, enemy, targetPosition) {
+    const nextX = enemy.position.x + Math.sign(targetPosition.x - enemy.position.x);
+    const nextY = enemy.position.y + Math.sign(targetPosition.y - enemy.position.y);
 
-    if (distance > 0) {
-        const stepX = dx / distance;
-        const stepY = dy / distance;
-
-        enemy.position.x += stepX;
-        enemy.position.y += stepY;
+    // Проверка на препятствие
+    if (isWall(nextX, nextY)) {
+        return; // Останавливаем движение, если впереди стена
     }
+
+    enemy.position.x = nextX;
+    enemy.position.y = nextY;
+
+    // Обновляем позицию на клиенте
+    io.emit('updateEnemy', { id: enemy.id, position: enemy.position });
 }
 
 function generateEnemyId() {
@@ -61,6 +67,6 @@ function generateEnemyId() {
 
 module.exports = {
     initializeEnemyManager,
-    updateEnemyTargets, // Экспорт функции для обновления цели врагов
+    updateEnemyTargets,
     enemies,
 };

@@ -3,7 +3,7 @@
 const overlayMapData = []; // Хранение информации о координатах построек
 const buildingModule = require('./buildingModule'); // Импорт buildingModule
 
-module.exports = (socket, io) => {
+module.exports = (socket, io, updateOverlayMap) => {
     socket.on('requestOverlayMap', () => {
         socket.emit('loadOverlayMap', overlayMapData);
         console.log('Overlay map data sent to client.');
@@ -31,6 +31,7 @@ module.exports = (socket, io) => {
 
         overlayMapData.push(newBuilding);
         io.emit('updateOverlayMap', overlayMapData);
+        updateOverlayMap(overlayMapData); 
     });
 
     // Обработка запроса на получение данных о здании
