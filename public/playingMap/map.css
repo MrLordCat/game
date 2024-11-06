@@ -1,0 +1,44 @@
+/* Стили для контейнера карты */
+.map {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    position: relative;
+}
+
+/* Стили для строки карты */
+.map-row {
+    display: flex;
+}
+
+/* Стили для клетки карты */
+.map-cell {
+    width: 10px;
+    height: 10px;
+}
+
+/* Стили для прохода (пустая клетка) */
+.map-cell.passage {
+    background-color: #111; /* Темный цвет для проходов */
+}
+
+/* Стили для стены */
+.map-cell.wall {
+    background-color: #333; /* Цвет для стен */
+}
+
+/* map.css */
+.ghost-building {
+    outline: 1px solid #00ffff;
+    box-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 15px #00ffff;
+    background-color: rgba(0, 255, 255, 0.2);
+    transition: box-shadow 0.2s ease, background-color 0.2s ease;
+    pointer-events: none; 
+}
+
+.ghost-building.wall { width: 20px; height: 20px; }
+.ghost-building.mainBuilding { width: 50px; height: 50px; }
+.ghost-building.barracks { width: 40px; height: 40px; }
+.ghost-building.farm { width: 40px; height: 40px; }

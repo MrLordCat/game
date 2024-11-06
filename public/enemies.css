@@ -1,0 +1,34 @@
+/* enemies.css */
+
+/* Базовый стиль для врагов */
+.enemy {
+    position: absolute;
+    background-color: red; /* Цвет для обозначения врага */
+    border: 2px solid darkred;
+    opacity: 0.8;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    box-sizing: border-box;
+}
+
+/* Эффект при наведении на врага */
+.enemy:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+    opacity: 1;
+}
+
+/* Дополнительные классы для различных размеров врагов */
+.enemy.size-2x2 {
+    width: 20px;
+    height: 20px;
+}
+
+.enemy.size-3x3 {
+    width: 30px;
+    height: 30px;
+}
+
+.enemy.size-4x4 {
+    width: 40px;
+    height: 40px;
+}

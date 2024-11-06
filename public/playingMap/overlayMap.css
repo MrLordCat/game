@@ -1,0 +1,38 @@
+/* Контейнер наложения */
+#overlayContainer {
+    pointer-events: none;
+    z-index: 10; /* Поверх основной карты */
+}
+
+/* Общие стили для зданий на наложенном слое */
+.building-overlay {
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+    opacity: 0.9;
+    pointer-events: auto; 
+}
+
+/* Стили для разных типов зданий */
+.building-overlay.W {
+    background: #0a0a0a;
+    border: 1px solid #2d2d2d;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.1), inset 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
+.building-overlay.M {
+    background: linear-gradient(45deg, #1f1a50, #3432a8);
+    border: 2px solid #4543ba;
+    box-shadow: 0 0 12px rgba(68, 0, 255, 0.8), inset 0 0 8px rgba(255, 255, 255, 0.1);
+}
+
+.building-overlay.B {
+    background: linear-gradient(45deg, #502828, #a83232);
+    border: 2px solid #c43a3a;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.6), inset 0 0 6px rgba(255, 255, 255, 0.1);
+}
+
+.building-overlay.F {
+    background: linear-gradient(45deg, #1f5028, #32a84d);
+    border: 2px solid #43c45e;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.6), inset 0 0 6px rgba(255, 255, 255, 0.1);
+}

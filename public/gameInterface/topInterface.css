@@ -1,0 +1,28 @@
+/* topInterface.css */
+
+#topInterface {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.8);
+    box-shadow: 0 0 10px #00ffcc, 0 0 20px #005566;
+    border-bottom: 2px solid #00ffcc;
+    z-index: 1000;
+}
+
+.top-interface-block {
+    padding: 5px 15px;
+    background-color: #111;
+    color: #00ffcc;
+    font-size: 1em;
+    font-family: 'Orbitron', sans-serif;
+    border: 1px solid #00ffcc;
+    text-align: center;
+    border-radius: 5px;
+    box-shadow: 0 0 5px #00ffcc;
+    transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+}

@@ -1,0 +1,60 @@
+#mapEditorInterface {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 120px;
+    background-color: #111;
+    color: #00ffff;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-right: 2px solid #00ffff;
+    border-bottom: 2px solid #00ffff;
+}
+
+#mapEditorInterface label {
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+#mapEditorInterface button {
+    background-color: #222;
+    color: #00ffff;
+    border: 1px solid #00ffff;
+    padding: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#mapEditorInterface button:hover {
+    background-color: #00ffff;
+    color: #111;
+}
+
+#mapEditorInterface input[type="number"] {
+    background-color: #222;
+    border: 1px solid #00ffff;
+    color: #00ffff;
+    padding: 4px;
+    font-size: 12px;
+    margin-bottom: 6px;
+    width: 100%;
+    text-align: center;
+}
+
+.map-cell.wall {
+    background-color: #444;
+}
+
+.map-cell.tree {
+    background-color: #228B22;
+}
+
+.map-cell.highlight {
+    outline: 1px solid #00ffff;
+    box-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 15px #00ffff;
+    background-color: rgba(0, 255, 255, 0.2);
+    transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}

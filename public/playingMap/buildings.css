@@ -1,0 +1,56 @@
+/* Общие стили для всех зданий */
+.map-cell.building {
+    position: relative;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+/* Стили для основного здания */
+.map-cell.M {
+    background: linear-gradient(45deg, #1f1a50, #3432a8);
+    border: 1px solid #4543ba;
+    box-shadow: 0 0 12px rgba(68, 0, 255, 0.8), inset 0 0 8px rgba(255, 255, 255, 0.1);
+}
+
+/* Стили для казармы */
+.map-cell.B {
+    background: linear-gradient(45deg, #502828, #a83232);
+    border: 1px solid #c43a3a;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.6), inset 0 0 6px rgba(255, 255, 255, 0.1);
+}
+
+/* Стили для фермы */
+.map-cell.F {
+    background: linear-gradient(45deg, #1f5028, #32a84d);
+    border: 1px solid #43c45e;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.6), inset 0 0 6px rgba(255, 255, 255, 0.1);
+}
+
+/* Стили для стены игрока */
+.map-cell.W {
+    background: #0a0a0a;
+    border: 1px solid #2d2d2d;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.1), inset 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
+/* Дополнительный стиль для отображения контента */
+.map-cell.W::before, .map-cell.M::before, .map-cell.B::before, .map-cell.F::before {
+    content: attr(data-symbol);
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 10px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+/* Стиль для выбранного здания */
+.selected-building {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.8), inset 0 0 10px rgba(255, 215, 0, 0.5);
+    transform: scale(1.05);
+}
+
+/* Стиль для здания при наведении */
+.hovered-building {
+    box-shadow: 0 0 10px rgba(0, 150, 255, 0.7), inset 0 0 5px rgba(0, 150, 255, 0.5);
+}

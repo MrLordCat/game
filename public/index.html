@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base Defense RPG</title>
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="stylesheet" href="playingMap/map.css">
+    <link rel="stylesheet" href="playingMap/buildings.css">
+    <link rel="stylesheet" href="playingMap/overlayMap.css">
+    <link rel="stylesheet" href="enemies.css">
+    <link rel="stylesheet" href="player.css">
+    <link rel="stylesheet" href="gameMenu.css">
+    <link rel="stylesheet" href="gameInterface/bottomInerface.css">
+    <link rel="stylesheet" href="mapEditor/mapEditor.css">
+    <link rel="stylesheet" href="lobby.css">
+    <link rel="stylesheet" href="gameInterface/topInterface.css">
+</head>
+<body>
+    <div class="start-screen-container" id="startScreen">
+        <h1>Welcome to Base Defense RPG</h1>
+        <button id="startGame">Start Game</button>
+    </div>
+    
+    <div class="menu-container" id="menu" style="display: none;">
+        <h1>Main Menu</h1>
+        <input type="text" id="playerName" placeholder="Enter your name">
+        <input type="text" id="roomName" placeholder="Enter room name">
+        <button id="createRoom">Create Room</button>
+        <button id="joinRoom">Join Room</button>
+        <button id="mapEditorButton">Map Editor</button>
+        <button id="toggleMusic">Enable Sound</button>
+        <div id="messages"></div>
+    </div>
+    
+
+    <!-- Интерфейс редактора карт -->
+    <div id="mapEditorInterface" style="display: none;">
+        <div class="editor-options">
+            <h3>Map Editor</h3>
+            <label for="editorMapWidth">Map Width:</label>
+            <input type="number" id="editorMapWidth" placeholder="Width (e.g., 100)">
+            <label for="editorMapHeight">Map Height:</label>
+            <input type="number" id="editorMapHeight" placeholder="Height (e.g., 100)">
+            <button id="editorApplySize">Apply Size</button>
+    
+            <h4>Brushes</h4>
+            <button id="editorWallBrush">Wall</button>
+            <button id="editorTreeBrush">Tree</button>
+    
+            <button id="editorSaveMap">Save Map</button>
+            <button id="editorReturnToMenu">Return to Main Menu</button>
+        </div>
+    </div>
+
+    <div class="lobby" id="lobby" style="display: none;">
+        <h1>Lobby: <span id="lobbyRoomName"></span></h1>
+        <ul id="playerList"></ul>
+        <label for="mapSelect">Select Map:</label>
+        <select id="mapSelect">
+            <option value="">Default Map</option>
+        </select>
+        <input type="file" id="uploadMap" accept=".json">
+        <button id="readyButton">Ready</button>
+        <button id="exitLobby">Exit from Lobby</button>
+        <div id="lobbyMessages"></div>
+    </div>
+
+    <div id="gameMenu" style="display: none;">
+        <button id="resumeButton">Resume</button>
+        <button id="mainMenuButton">Main Menu</button>
+    </div>
+
+    <div id="topInterface" style="display: none;">
+        <div id="gameTimer" class="top-interface-block">00:00</div>
+        <div id="goldCounter" class="top-interface-block">Gold: 0</div>
+        <div id="woodCounter" class="top-interface-block">Wood: 0</div>
+        <div id="foodCounter" class="top-interface-block">Food: 0/0</div>
+    </div>
+
+  <!-- Нижний интерфейс -->
+<div id="bottomInterface" style="display: none;">
+    <!-- Блок аватара -->
+    <div id="bottomInterface_avatarBlock">
+        <div class="bottomInterface_avatar">AVATAR</div>
+    </div>
+
+    <!-- Центральный блок характеристик -->
+    <div id="bottomInterface_statsBlock">
+        <div id="bottomInterface_xpAndHealthBlock">
+            <div id="bottomInterface_xpBar" class="bottomInterface_bar"><span>XP</span></div>
+            <div id="bottomInterface_healthMana">
+                <div id="bottomInterface_health">0</div>
+                <div id="bottomInterface_mana">0</div>
+            </div>
+        </div>
+        <div id="bottomInterface_attributes">
+            <div> <span id="bottomInterface_strength">0</span></div>
+            <div> <span id="bottomInterface_agility">0</span></div>
+            <div><span id="bottomInterface_intelligence">0</span></div>
+        </div>
+    </div>
+
+    <!-- Блок действий, сетка 3x3 -->
+    <div id="bottomInterface_buttonGrid" style="display: grid;">
+        <button id="bottomInterface_buildButton">B</button>
+        <button id="bottomInterface_repairButton">R</button>
+        <button id="bottomInterface_skillButton">S</button>
+        <button></button>
+        <button></button>
+        <button></button>
+        <button></button>
+        <button></button>
+        <button></button>
+    </div>
+</div>
+
+<!-- Интерфейс информации о здании -->
+<div id="buildingInfoInterface" style="display: none;">
+    <div id="buildingImage">Building Image Placeholder</div>
+    <div id="buildingStats">
+        <div id="buildingHealth">Health: 1000</div>
+        <div id="buildingDefense">Defense: 50</div>
+    </div>
+    <div id="buildingMenu">
+        <button id="upgradeBuildingButton">Upgrade</button>
+        <button id="repairBuildingButton">Repair</button>
+        <!-- Другие кнопки меню здания -->
+    </div>
+</div>
+
+
+    <div class="map" id="mapContainer" style="display: none;"></div>
+
+     <!-- MAin configs -->
+     <script src="/socket.io/socket.io.js"></script>
+     <script type="module" src="./lobby/mainLobby.js"></script>
+     <script type="module" src="./lobby/lobbyActions.js"></script>
+     <script type="module" src="./lobby/lobbyUI.js"></script>
+
+     <script  src="gameCore.js"></script>
+
+
+
+    <script  src="menu.js"></script>
+
+ 
+ 
+
+    <script type="module" src="mapClient.js"></script>
+    
+
+    <script  src="main.js"></script>
+
+ <!-- PLAYING MAP -->
+    <script type="module" src="playingMap/map.js"></script>
+    <script type="module" src="playingMap/buildingMap.js"></script>
+    <script type="module" src="playingMap/overlayMap.js"></script>
+   
+
+    <script type="module"  src="playersPosition.js"></script>
+    <script src="gameInterface/topInterface.js"></script>
+
+    <script src="gameTimer.js"></script>
+
+    <!-- map edditor -->
+    <script type="module" src="mapEditor/mapEditor.js"></script>
+    <script type="module" src="mapEditor/mapManager.js"></script>
+    <script type="module" src="mapEditor/mapStorage.js"></script>
+    <script type="module" src="mapEditor/mapTools.js"></script>
+
+    <script src="gameMenu.js"></script>
+    <script type="module" src="./playerResources.js"></script>
+
+
+     <!-- Game Interface -->
+    <script src="gameInterface/buildMenu.js"></script>
+    <script  type="module"  src="gameInterface/bottomInterface.js"></script>
+    <script type="module" src="gameInterface/buildingSelectionModule.js"></script>
+
+
+    <script src="buildCheck.js"></script>
+    <script src="cameraModule.js"></script>
+    <script src="playerAttributes.js"></script>
+    <script type="module" src="controls.js"></script>
+    <script type="module" src="movement.js"></script>
+
+    <script type="module" src="enemyReceiverModule.js"></script>
+    <script type="module" src="enemyRendererModule.js"></script>
+</body>
+</html>

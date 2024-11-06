@@ -1,0 +1,15 @@
+.player {
+    z-index: 10;
+    background-color: #4CAF50; /* Зеленый цвет */
+    position: absolute;
+    pointer-events: auto; 
+    cursor: pointer;
+}
+.other-player {
+    background-color: #FFA500; /* Оранжевый цвет для других игроков */
+    border-radius: 50%;
+    opacity: 0.8; /* Немного прозрачный для различия */
+}
+.player, .other-player {
+    transition: left 0.2s ease, top 0.2s ease;
+}
