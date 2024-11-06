@@ -11,30 +11,35 @@ const buildingManager = require('./buildingCheck');
 const playerAttributes = require('./playerAttributes');
 const enemyManager = require('./enemyManager');
 const handleMap = require('./mapServer');
-const handlePlayerMovement = require('./playerMovementServer'); 
+const { handlePlayerMovement, updateMapData } = require('./playerMovementServer');
 
-const { format } = require('path');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.static('public'));
 
+// Функция для обновления карты в модуле передвижения
+function updatePlayerMovementMap(newMap) {
+    updateMapData(newMap);
+}
+
 io.on('connection', (socket) => {
     console.log(`Player connected: ${socket.id}`);
     handleLobby(socket, io);
-    handleMap(socket, io);
+    handleMap(socket, io, updatePlayerMovementMap); // Передаем функцию для обновления карты
+    handlePlayerMovement(socket, io); // Подключаем обработчик передвижения
     playersServer(io);
     playerResourcesServer(io);
     roomTimerServer(io);
-    handleMap(socket, io);
-    handlePlayerMovement(socket, io);
+    playerAttributes.handleAttributes(socket);
+    buildingManager.handleBuilding(socket, io);
+
     socket.on('startGame', () => {
         console.log("Game started, initializing enemy manager...");
         enemyManager.initializeEnemyManager(io);
     });
-    playerAttributes.handleAttributes(socket);
-    buildingManager.handleBuilding(socket, io);
+
     socket.on('disconnect', () => {
         console.log(`Player disconnected: ${socket.id}`);
     });

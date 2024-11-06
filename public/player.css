@@ -1,8 +1,10 @@
 .player {
     z-index: 10;
-    background-color: #4CAF50; /* Зеленый цвет */
+    background-color: #4CAF50; /* Зеленый цвет для видимости */
     position: absolute;
-    pointer-events: auto; 
+    width: 10px; /* Убедитесь, что размер виден */
+    height: 10px;
+    pointer-events: auto;
     cursor: pointer;
 }
 .other-player {

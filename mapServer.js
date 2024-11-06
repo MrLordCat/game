@@ -1,28 +1,33 @@
 // mapServer.js
 
-let customMapData = null; // Переменная для хранения загруженной карты
+let customMapData = null; // Переменная для хранения пользовательской карты
+let mapData = generateDefaultMap(); 
+let updateMovementMap; // Переменная для функции обновления карты в модуле передвижения
 
-module.exports = (socket) => {
-    // Обработка события загрузки карты от клиента
-    socket.on('uploadMap', (mapData) => {
-        console.log("Received custom map from client:", JSON.stringify(mapData));
-        customMapData = convertMapFormat(mapData); // Конвертируем пользовательскую карту
-        console.log("Converted map format:");
+module.exports = (socket, io, updateMapFunction) => {
+    updateMovementMap = updateMapFunction; // Сохраняем функцию для обновления карты в модуле передвижения
+
+    socket.on('uploadMap', (data) => {
+        console.log("Received custom map from client:", JSON.stringify(data));
+        customMapData = convertMapFormat(data); // Конвертируем пользовательскую карту
+        console.log("Converted map format.");
+        
+        // Обновляем карту в модуле передвижения
+        updateMovementMap(customMapData);
     });
 
-    // Обработка события запроса карты
     socket.on('requestMap', () => {
         console.log("Received request for map from client.");
         
         // Если загружена пользовательская карта, отправляем её
         if (customMapData) {
             socket.emit('loadMap', customMapData);
-            console.log("Отправляем карту:");
+            console.log("Custom map sent to client.");
+            updateMovementMap(customMapData); // Обновляем карту в модуле передвижения
         } else {
-            // Если пользовательская карта не загружена, отправляем стандартную карту
-            const mapData = generateDefaultMap();
             socket.emit('loadMap', mapData);
             console.log("Default map sent to client.");
+            updateMovementMap(mapData); // Обновляем карту в модуле передвижения
         }
     });
 };
@@ -46,11 +51,9 @@ function generateDefaultMap() {
 }
 
 // Функция для преобразования пользовательской карты в нужный формат
-function convertMapFormat(mapData) {
+function convertMapFormat(data) {
     console.log("Starting map conversion...");
-    const convertedMap = mapData.map(row => 
-        row.map(cell => cell === 1 ? { type: 'wall' } : { type: 'passage' })
-    );
-    console.log("Converted map:");
-    return convertedMap;
+    return data.map(row => row.map(cell => cell === 1 ? { type: 'wall' } : { type: 'passage' }));
 }
+
+module.exports.getCurrentMap = () => customMapData || mapData;
