@@ -1,6 +1,8 @@
 const enemyManager = require('./enemyManager');
 const players = {}; // Хранит информацию об игроках
 const { initializePlayerAttributes, updateAttributes } = require('./playerAttributes');
+const { clearOverlayMap } = require('./overlayMapServer'); // Импортируем функцию очистки overlay
+const { clearMap } = require('./mapServer');
 
 module.exports = (socket, io) => {
 
@@ -42,7 +44,15 @@ module.exports = (socket, io) => {
         for (const roomName in players) {
             if (players[roomName][socket.id]) {
                 delete players[roomName][socket.id];
-                io.to(roomName).emit('updatePlayers', players[roomName]);
+    
+                // Проверка, пуста ли комната после удаления игрока
+                if (Object.keys(players[roomName]).length === 0) {
+                    delete players[roomName];
+                    io.to(roomName).emit('roomClosed'); // Можно отправить уведомление об удалении комнаты
+                    console.log(`Room ${roomName} is now empty and has been deleted.`);
+                } else {
+                    io.to(roomName).emit('updatePlayers', players[roomName]);
+                }
             }
         }
     });

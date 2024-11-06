@@ -45,6 +45,10 @@ const buildingManager = {
         }
     },
     handleBuilding: function(socket, io) {
+        socket.removeAllListeners('requestBuildingOptions');
+        socket.removeAllListeners('requestBuild');
+        socket.removeAllListeners('confirmBuild');
+        
         socket.on('requestBuildingOptions', () => {
             const buildingOptions = buildingModule.getAvailableBuildings();
             socket.emit('buildingOptions', buildingOptions);

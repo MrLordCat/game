@@ -2,6 +2,9 @@
 
 const rooms = {};
 const players = {};
+const { clearMap } = require('./mapServer'); // Импортируем функцию очистки карты
+const { clearOverlayMap } = require('./overlayMapServer'); // Импортируем функцию очистки overlay
+const playerResourcesServer = require('./playerResourcesServer');
 
 function handleLobby(socket, io) {
     socket.on('createRoom', ({ roomName, playerName }) => {
@@ -53,11 +56,17 @@ function handleLobby(socket, io) {
             room.players = room.players.filter(p => p.id !== socket.id);
             delete players[roomName][socket.id];
             socket.leave(roomName);
-
-            // Проверяем, если в комнате больше нет игроков, удаляем комнату
+            console.log("Player left the room", roomName);
+            playerResourcesServer.resetResources(socket.id);
+            // Проверяем, если в комнате больше нет игроков, удаляем комнату и очищаем данные карты
             if (room.players.length === 0) {
                 delete rooms[roomName];
                 io.to(roomName).emit('roomClosed');
+                console.log("Room closed:", roomName);
+
+                // Очистка карты и overlay при удалении комнаты
+                clearMap();
+                clearOverlayMap(io);
             } else {
                 io.to(roomName).emit('playerLeft', { playerId: socket.id });
                 io.to(roomName).emit('updatePlayers', players[roomName]);
@@ -123,10 +132,12 @@ function handleLobby(socket, io) {
             // Удаляем игрока из списка игроков в комнате
             room.players = room.players.filter(p => p.id !== socket.id);
             delete players[room.name][socket.id];
-    
+            playerResourcesServer.resetResources(socket.id);
             if (room.players.length === 0) {
                 delete rooms[room.name];
                 io.to(room.name).emit('roomClosed');
+                clearMap();
+                clearOverlayMap(io);
             } else {
                 io.to(room.name).emit('playerJoined', room.players);
             }

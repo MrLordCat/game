@@ -60,7 +60,7 @@ io.on('connection', (socket) => {
 
 setInterval(() => {
     console.log("Active Sockets:", Object.keys(activeSockets));
-}, 10000);
+}, 60000);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

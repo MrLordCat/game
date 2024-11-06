@@ -5,6 +5,11 @@ const buildingModule = require('./buildingModule'); // Импорт buildingModu
 const { players } = require('./playerMovementServer'); 
 
 module.exports = (socket, io, updateOverlayMap) => {
+    socket.on('clearOverlayMap', () => {
+        overlayMapData.length = 0;
+        io.emit('updateOverlayMap', overlayMapData);
+        console.log('Overlay map cleared.');
+    });
     socket.on('requestOverlayMap', () => {
         socket.emit('loadOverlayMap', overlayMapData);
         console.log('Overlay map data sent to client.');
@@ -103,4 +108,9 @@ module.exports = (socket, io, updateOverlayMap) => {
         return false;
     }
     
+};
+module.exports.clearOverlayMap = (io) => {
+    overlayMapData.length = 0;
+    io.emit('updateOverlayMap', overlayMapData);
+    console.log('Overlay map cleared by external call.');
 };

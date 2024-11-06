@@ -34,8 +34,14 @@ function handlePlayerResources(socket) {
     });
 }
 
+// Функция для сброса ресурсов игрока к начальному значению
+function resetResources(socketId) {
+    playersResources[socketId] = initializeResources();
+}
+
 module.exports = {
     handlePlayerResources,
     getResources: (socketId) => playersResources[socketId] || initializeResources(),
-    updateResources
+    updateResources,
+    resetResources
 };

@@ -15,7 +15,12 @@ module.exports = (socket, io, updateMapFunction) => {
         // Обновляем карту в модуле передвижения
         updateMovementMap(customMapData);
     });
-
+    socket.on('clearMap', () => {
+        customMapData = null;
+        mapData = generateDefaultMap();
+        updateMapFunction(mapData);
+        console.log('Map reset to default.');
+    });
     socket.on('requestMap', () => {
         console.log("Received request for map from client.");
         
@@ -31,7 +36,12 @@ module.exports = (socket, io, updateMapFunction) => {
         }
     });
 };
-
+module.exports.clearMap = () => {
+    customMapData = null;
+    mapData = generateDefaultMap();
+    updateMovementMap(mapData);
+    console.log('Map cleared and reset to default by external call.');
+};
 // Функция для генерации стандартной карты
 function generateDefaultMap() {
     const mapWidth = 100;
