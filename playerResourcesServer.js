@@ -2,7 +2,6 @@
 
 const playersResources = {}; // Хранит ресурсы каждого игрока по их socket.id
 
-// Инициализация ресурсов для нового игрока
 function initializeResources() {
     return {
         gold: 1000,
@@ -11,7 +10,6 @@ function initializeResources() {
     };
 }
 
-// Функция для обработки обновления ресурсов
 function updateResources(socket, resources) {
     if (playersResources[socket.id]) {
         playersResources[socket.id] = { ...playersResources[socket.id], ...resources };
@@ -19,29 +17,25 @@ function updateResources(socket, resources) {
     }
 }
 
-// Получение ресурсов игрока по socket.id
-function getResources(socketId) {
-    return playersResources[socketId] || initializeResources();
+function handlePlayerResources(socket) {
+    playersResources[socket.id] = initializeResources();
+    socket.emit('updateResources', playersResources[socket.id]);
+
+    socket.on('requestResources', () => {
+        socket.emit('updateResources', playersResources[socket.id]);
+    });
+
+    socket.on('modifyResources', (newResources) => {
+        updateResources(socket, newResources);
+    });
+
+    socket.on('disconnect', () => {
+        delete playersResources[socket.id];
+    });
 }
 
-module.exports = (io) => {
-    io.on('connection', (socket) => {
-        playersResources[socket.id] = initializeResources();
-        socket.emit('updateResources', playersResources[socket.id]);
-
-        socket.on('requestResources', () => {
-            socket.emit('updateResources', playersResources[socket.id]);
-        });
-
-        socket.on('modifyResources', (newResources) => {
-            updateResources(socket, newResources);
-        });
-
-        socket.on('disconnect', () => {
-            delete playersResources[socket.id];
-        });
-    });
+module.exports = {
+    handlePlayerResources,
+    getResources: (socketId) => playersResources[socketId] || initializeResources(),
+    updateResources
 };
-
-module.exports.getResources = getResources;
-module.exports.updateResources = updateResources;

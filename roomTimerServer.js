@@ -11,9 +11,8 @@ function startRoomTimer(io, roomName) {
     roomTimers[roomName] = {
         interval: setInterval(() => {
             time += 1;
-            io.to(roomName).emit('updateTimer', time); // Отправляем время клиентам комнаты
+            io.to(roomName).emit('updateTimer', time);
 
-            
             if (time >= 600) { 
                 endRoomTimer(io, roomName);
                 io.to(roomName).emit('gameEnded', 'Time limit reached');
@@ -28,33 +27,31 @@ function endRoomTimer(io, roomName) {
     if (roomTimers[roomName]) {
         clearInterval(roomTimers[roomName].interval);
         delete roomTimers[roomName];
-        io.to(roomName).emit('updateTimer', 0); // Сброс таймера на интерфейсе
+        io.to(roomName).emit('updateTimer', 0);
         console.log(`Timer stopped for room: ${roomName}`);
     }
 }
 
-module.exports = (io) => {
-    io.on('connection', (socket) => {
-        socket.on('startGame', ({ roomName }) => {
-            if (roomName) {
-                startRoomTimer(io, roomName);
-            }
-        });
+module.exports = (io, socket) => {
+    socket.on('startGame', ({ roomName }) => {
+        if (roomName) {
+            startRoomTimer(io, roomName);
+        }
+    });
 
-        socket.on('endGame', ({ roomName }) => {
-            if (roomName) {
+    socket.on('endGame', ({ roomName }) => {
+        if (roomName) {
+            endRoomTimer(io, roomName);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        const rooms = Array.from(socket.rooms).filter(room => room !== socket.id);
+        rooms.forEach(roomName => {
+            const room = io.sockets.adapter.rooms.get(roomName);
+            if (!room || room.size === 1) {
                 endRoomTimer(io, roomName);
             }
-        });
-
-        socket.on('disconnect', () => {
-            const rooms = Array.from(socket.rooms).filter(room => room !== socket.id);
-            rooms.forEach(roomName => {
-                const room = io.sockets.adapter.rooms.get(roomName);
-                if (!room || room.size === 1) {
-                    endRoomTimer(io, roomName);
-                }
-            });
         });
     });
 };

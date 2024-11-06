@@ -120,9 +120,10 @@ function handleLobby(socket, io) {
     socket.on('disconnect', () => {
         const room = getRoomByPlayer(socket.id);
         if (room) {
+            // Удаляем игрока из списка игроков в комнате
             room.players = room.players.filter(p => p.id !== socket.id);
             delete players[room.name][socket.id];
-
+    
             if (room.players.length === 0) {
                 delete rooms[room.name];
                 io.to(room.name).emit('roomClosed');
@@ -130,6 +131,10 @@ function handleLobby(socket, io) {
                 io.to(room.name).emit('playerJoined', room.players);
             }
         }
+    
+        // Удаляем все обработчики, связанные с этим сокетом
+        socket.removeAllListeners();
+        console.log(`Player ${socket.id} disconnected and removed from players list.`);
     });
 
     function getRoomByPlayer(playerId) {
