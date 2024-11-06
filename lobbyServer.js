@@ -71,26 +71,35 @@ function handleLobby(socket, io) {
         if (room) {
             console.log(`Player ${socket.id} in room ${room.name} is setting ready status.`);
             const player = room.players.find(p => p.id === socket.id);
-            
+    
             if (player) {
                 console.log(`Found player ${socket.id} in room ${room.name}. Current ready status: ${player.isReady}`);
             } else {
                 console.log(`Player ${socket.id} not found in room ${room.name}`);
             }
-            
+    
+            // Проверяем, если игрок найден и его статус "не готов", только тогда обновляем
             if (player && !player.isReady) {
                 player.isReady = true;
                 room.readyCount++;
-              //  console.log(`Player ${socket.id} is now ready. Updated readyCount: ${room.readyCount}, Total players: ${room.players.length}`);
-                io.to(room.name).emit('playerJoined', room.players);
+                console.log(`Player ${socket.id} is now ready. Updated readyCount: ${room.readyCount}, Total players: ${room.players.length}`);
     
+                io.to(room.name).emit('playerJoined', room.players);
+                
+                // Проверка: если все игроки готовы, отправляем событие 'allPlayersReady'
                 if (room.readyCount === room.players.length && room.players.length > 0) {
-                 //   console.log(`All players in room ${room.name} are ready. Emitting 'allPlayersReady' event.`);
+                    console.log(`All players in room ${room.name} are ready. Emitting 'allPlayersReady' event.`);
                     io.to(room.name).emit('allPlayersReady');
                 }
             } else {
-            //    console.log(`Player ${socket.id} was already marked as ready or not found.`);
+                console.log(`Player ${socket.id} was already marked as ready or not found.`);
             }
+    
+            // Логирование для подтверждения текущего состояния готовности всех игроков
+            room.players.forEach(p => {
+                console.log(`Player ${p.id} - Ready Status: ${p.isReady}`);
+            });
+            console.log(`Current readyCount: ${room.readyCount}`);
         } else {
             console.log(`Room not found for player ${socket.id}.`);
         }
@@ -124,16 +133,17 @@ function handleLobby(socket, io) {
     });
 
     function getRoomByPlayer(playerId) {
-        // Проходим по всем комнатам
         for (const roomName in rooms) {
-            // Проверяем, есть ли игрок с данным ID в комнате
             const room = rooms[roomName];
             if (room.players.some(player => player.id === playerId)) {
-                return { name: roomName, ...room };
+                room.name = roomName; // Присваиваем имя непосредственно объекту комнаты
+                return room; // Возвращаем сам объект комнаты
             }
         }
-        return null; // Если не нашли комнату, возвращаем null
+        return null;
     }
+    
+    
     
 }
 

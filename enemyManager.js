@@ -18,7 +18,6 @@ function updateEnemyTargets(newPlayerPosition) {
     enemies.forEach(enemy => {
         enemy.targetPosition = playerPosition;
     });
-    console.log("Обновлена цель для врагов:", playerPosition); // Лог для проверки обновления цели
 }
 
 function spawnEnemy(io, playerPosition) {
