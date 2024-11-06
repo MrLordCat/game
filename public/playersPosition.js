@@ -43,50 +43,50 @@ const playerPositionModule = {
 
     updatePlayerPosition: function(position) {
         if (!window.gameCore.gameSettings.isGameActive || !this.playerElement) return;
-
-        // Обновление позиции главного игрока
+    
+        // Обновление позиции главного игрока без смещения на половину клетки
         this.playerElement.style.position = 'absolute';
-        this.playerElement.style.left = `${(position.x - this.playerSize / 2) * 10}px`;
-        this.playerElement.style.top = `${(position.y - this.playerSize / 2) * 10}px`;
+        this.playerElement.style.left = `${position.x * 10}px`;
+        this.playerElement.style.top = `${position.y * 10}px`;
     },
+    
 
     updateOtherPlayers: function(players) {
         if (!window.gameCore.gameSettings.isGameActive) return;
-
+    
         console.log('Updating other players:', players);
-
+    
         const mapContainer = document.getElementById('mapContainer');
         if (!mapContainer) {
             console.error('mapContainer not found');
             return;
         }
-
-        for (const playerId in players) {
-            const playerData = players[playerId];
-            let otherPlayerElement = this.otherPlayers[playerId];
-
+    
+        const playerId = window.gameCore.playerId; // Предполагается, что у вас есть идентификатор текущего игрока
+    
+        for (const otherPlayerId in players) {
+            // Пропускаем самого себя
+            if (otherPlayerId === playerId) continue;
+    
+            const playerData = players[otherPlayerId];
+            let otherPlayerElement = this.otherPlayers[otherPlayerId];
+    
             if (!otherPlayerElement) {
                 otherPlayerElement = document.createElement('div');
                 otherPlayerElement.className = 'other-player';
                 mapContainer.appendChild(otherPlayerElement);
-                this.otherPlayers[playerId] = otherPlayerElement;
+                this.otherPlayers[otherPlayerId] = otherPlayerElement;
             }
-
+    
             const sizeInPixels = this.playerSize * 10;
             otherPlayerElement.style.width = `${sizeInPixels}px`;
             otherPlayerElement.style.height = `${sizeInPixels}px`;
             otherPlayerElement.style.position = 'absolute';
-            otherPlayerElement.style.left = `${(playerData.x - this.playerSize / 2) * 10}px`;
-            otherPlayerElement.style.top = `${(playerData.y - this.playerSize / 2) * 10}px`;
-        }
-
-        for (const playerId in this.otherPlayers) {
-            if (!players[playerId]) {
-                this.otherPlayers[playerId].remove();
-                delete this.otherPlayers[playerId];
-            }
+            otherPlayerElement.style.left = `${playerData.x * 10}px`;
+            otherPlayerElement.style.top = `${playerData.y * 10}px`;
         }
     }
+    
 };
 
 window.playerPositionModule = playerPositionModule;

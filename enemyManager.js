@@ -4,7 +4,7 @@ const { isWall } = require('./playerMovementServer'); // Импортируем 
 
 let enemies = [];
 const enemySizeOptions = [{ width: 2, height: 2 }, { width: 3, height: 3 }, { width: 4, height: 4 }];
-const spawnInterval = 5000;
+const spawnInterval = 511000;
 const moveInterval = 500;
 let playerPosition = { x: 50, y: 50 }; // Переменная для хранения актуальной позиции игрока
 

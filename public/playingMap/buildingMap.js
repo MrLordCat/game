@@ -31,10 +31,19 @@ mapModule.buildingManager = {
         mapContainer.addEventListener('mousemove', (event) => {
             const target = event.target;
             if (target.classList.contains('map-cell')) {
-                const x = parseInt(target.dataset.x, 10);
-                const y = parseInt(target.dataset.y, 10);
+                let x = parseInt(target.dataset.x, 10);
+                let y = parseInt(target.dataset.y, 10);
 
-                // Учитываем смещение контейнера
+                // Ограничение по горизонтали
+                if (x + building.size.width > containerRect.width / 10) {
+                    x = Math.floor(containerRect.width / 10 - building.size.width);
+                }
+
+                // Ограничение по вертикали
+                if (y + building.size.height > containerRect.height / 10) {
+                    y = Math.floor(containerRect.height / 10 - building.size.height);
+                }
+
                 ghostBuilding.style.left = `${containerRect.left + x * 10}px`;
                 ghostBuilding.style.top = `${containerRect.top + y * 10}px`;
             }
@@ -43,17 +52,23 @@ mapModule.buildingManager = {
         mapContainer.addEventListener('click', (event) => {
             const target = event.target;
             if (target.classList.contains('map-cell')) {
-                const x = parseInt(target.dataset.x, 10);
-                const y = parseInt(target.dataset.y, 10);
-                buildingCheck.confirmBuild(building, x, y); // Используем buildingCheck для подтверждения постройки
-                ghostBuilding.remove();
+                let x = parseInt(target.dataset.x, 10);
+                let y = parseInt(target.dataset.y, 10);
 
-                // Восстанавливаем pointer-events после завершения строительства
-                overlayContainer.style.pointerEvents = '';
-                enemyContainer.style.pointerEvents = '';
+                // Применяем те же ограничения при клике, чтобы здание не вышло за границы
+                if (x + building.size.width > containerRect.width / 10) {
+                    x = Math.floor(containerRect.width / 10 - building.size.width);
+                }
+                if (y + building.size.height > containerRect.height / 10) {
+                    y = Math.floor(containerRect.height / 10 - building.size.height);
+                }
+
+                buildingCheck.confirmBuild(building, x, y);
+                ghostBuilding.remove();
             }
         }, { once: true });
     },
+
 
     placeBuilding: function(x, y, building) {
         console.log("Place Building map", x, y, building);

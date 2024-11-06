@@ -2,6 +2,7 @@
 
 const overlayMapData = []; // Хранение информации о координатах построек
 const buildingModule = require('./buildingModule'); // Импорт buildingModule
+const { players } = require('./playerMovementServer'); 
 
 module.exports = (socket, io, updateOverlayMap) => {
     socket.on('requestOverlayMap', () => {
@@ -11,13 +12,14 @@ module.exports = (socket, io, updateOverlayMap) => {
 
     socket.on('placeBuilding', (data) => {
         const { x, y, building } = data;
-
-        if (isPositionBlocked(x, y, building.size)) {
+        const mapData = require('./mapServer').getCurrentMap();
+        
+        if (isPositionBlocked(x, y, building.size, mapData, players)) {
             socket.emit('placementFailed', { x, y });
             console.log(`Position (${x}, ${y}) is blocked, cannot place building.`);
             return;
         }
-
+    
         const newBuilding = {
             x,
             y,
@@ -28,7 +30,7 @@ module.exports = (socket, io, updateOverlayMap) => {
             armor: building.armor,
             hasMenu: building.hasMenu,
         };
-
+    
         overlayMapData.push(newBuilding);
         io.emit('updateOverlayMap', overlayMapData);
         updateOverlayMap(overlayMapData); 
@@ -57,8 +59,9 @@ module.exports = (socket, io, updateOverlayMap) => {
         console.log('Overlay map cleared.');
     });
 
-    function isPositionBlocked(x, y, size) {
-        return overlayMapData.some(building => {
+    function isPositionBlocked(x, y, size, mapData, players) {
+        // Проверка наложения на другие здания
+        const isOverlayBlocked = overlayMapData.some(building => {
             return (
                 x < building.x + building.width &&
                 x + size.width > building.x &&
@@ -66,5 +69,38 @@ module.exports = (socket, io, updateOverlayMap) => {
                 y + size.height > building.y
             );
         });
+    
+        if (isOverlayBlocked) {
+            console.log(`Blocked by another building at (${x}, ${y}).`);
+            return true;
+        }
+    
+        // Проверка на стены карты
+        for (let i = 0; i < size.width; i++) {
+            for (let j = 0; j < size.height; j++) {
+                if (mapData[y + j] && mapData[y + j][x + i] && mapData[y + j][x + i].type === 'wall') {
+                    console.log(`Blocked by wall at (${x + i}, ${y + j}).`);
+                    return true;
+                }
+            }
+        }
+    
+        // Проверка на игроков и врагов
+        const isPlayerOrEnemyBlocked = Object.values(players).some(player => {
+            return (
+                x < player.x + 1 &&
+                x + size.width > player.x &&
+                y < player.y + 1 &&
+                y + size.height > player.y
+            );
+        });
+    
+        if (isPlayerOrEnemyBlocked) {
+            console.log(`Blocked by player or enemy at (${x}, ${y}).`);
+            return true;
+        }
+    
+        return false;
     }
+    
 };

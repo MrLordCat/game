@@ -59,9 +59,14 @@ function isWall(x, y) {
 
 function movePlayerToTarget(socket, io, player, targetPosition) {
     return setInterval(() => {
-        const nextX = player.x + Math.sign(targetPosition.x - player.x);
-        const nextY = player.y + Math.sign(targetPosition.y - player.y);
+        const deltaX = targetPosition.x - player.x;
+        const deltaY = targetPosition.y - player.y;
 
+        // Проверка, достигнут ли targetPosition по каждой оси
+        const nextX = deltaX !== 0 ? player.x + Math.sign(deltaX) : player.x;
+        const nextY = deltaY !== 0 ? player.y + Math.sign(deltaY) : player.y;
+
+        // Проверяем, не столкнется ли игрок с препятствием
         if (isWall(nextX, nextY)) {
             clearInterval(moveIntervals[socket.id]);
             delete moveIntervals[socket.id];
@@ -70,20 +75,23 @@ function movePlayerToTarget(socket, io, player, targetPosition) {
 
         player.x = nextX;
         player.y = nextY;
-
+        io.emit('updatePlayers', players);
+        // Если достигли цели, останавливаем передвижение
         if (player.x === targetPosition.x && player.y === targetPosition.y) {
             clearInterval(moveIntervals[socket.id]);
             delete moveIntervals[socket.id];
             return;
         }
 
-        io.emit('updatePlayers', players);
-    }, 200);
+      
+    }, 100);
 }
+
 
 module.exports = {
     handlePlayerMovement,
     updateMapData,
     updateOverlayData,
-    isWall 
+    isWall,
+    players
 };
