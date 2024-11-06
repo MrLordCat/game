@@ -11,12 +11,14 @@ const buildingSelectionModule = {
 
     selectBuilding: function(buildingElement, buildingId) {
         this.deselectBuilding();
-    
+
         this.selectedBuilding = buildingElement;
         this.selectedBuilding.classList.add('selected-building');
-    
-        console.log(`Запрашиваем данные для здания с ID: ${buildingId}`);
-        window.socket.emit('requestBuildingData', { buildingId });
+
+        // Получаем имя комнаты из gameCore и отправляем с запросом
+        const roomName = window.gameCore.lobby.roomName;
+        console.log(`Запрашиваем данные для здания с ID: ${buildingId} в комнате ${roomName}`);
+        window.socket.emit('requestBuildingData', { roomName, buildingId });
     },
 
     deselectBuilding: function() {

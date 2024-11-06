@@ -129,15 +129,15 @@ function handleLobby(socket, io) {
     socket.on('disconnect', () => {
         const room = getRoomByPlayer(socket.id);
         if (room) {
-            // Удаляем игрока из списка игроков в комнате
+            // Удаление игрока из комнаты
             room.players = room.players.filter(p => p.id !== socket.id);
             delete players[room.name][socket.id];
             playerResourcesServer.resetResources(socket.id);
             if (room.players.length === 0) {
                 delete rooms[room.name];
                 io.to(room.name).emit('roomClosed');
-                clearMap(roomName); // Передача roomName в clearMap
-                clearOverlayMap(roomName);
+                clearMap(room.name); // Передача roomName в clearMap
+                clearOverlayMap(room.name); // Передача roomName в clearOverlayMap
             } else {
                 io.to(room.name).emit('playerJoined', room.players);
             }
