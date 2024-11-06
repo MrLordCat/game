@@ -5,17 +5,12 @@ const mapModule = {
     mapWidth: 100,
     mapHeight: 100,
 
-    init: function() {
+    init: async function() {
         console.log('Map module initialized');
         
-        // Проверяем, выбрана ли пользовательская карта в gameCore и загружаем её
-        if (window.gameCore.lobby.selectedMap) {
-            console.log('Загрузка пользовательской карты из gameCore');
-            this.loadCustomMap(window.gameCore.lobby.selectedMap);
-        } else {
-            this.generateMap();  // Иначе создаём сгенерированную карту
-        }
-        
+        // Запрашиваем карту с сервера всегда, чтобы загрузить актуальную версию
+        await this.generateMap();
+
         this.renderMap();
         this.buildingManager.init();
     },
@@ -32,18 +27,26 @@ const mapModule = {
         console.log('Ширина карты:', this.mapWidth, 'Высота карты:', this.mapHeight);
         this.renderMap();
         this.buildingManager.init();
+        console.log('Map loaded');
     },
 
     generateMap: function() {
-        this.mapData = Array(this.mapHeight).fill().map(() => Array(this.mapWidth).fill(0));
-        for (let y = 0; y < this.mapHeight; y++) {
-            this.mapData[y][0] = 1;
-            this.mapData[y][this.mapWidth - 1] = 1;
-        }
-        for (let x = 0; x < this.mapWidth; x++) {
-            this.mapData[0][x] = 1;
-            this.mapData[this.mapHeight - 1][x] = 1;
-        }
+        return new Promise((resolve) => {
+            console.log('Запрос карты с сервера...');
+            window.socket.emit('requestMap'); // Отправляем запрос на сервер
+            window.socket.on('loadMap', (serverMapData) => {
+                if (serverMapData && serverMapData.length > 0) {
+                    this.mapData = serverMapData;
+                    this.mapWidth = serverMapData[0].length;
+                    this.mapHeight = serverMapData.length;
+                    console.log('Карта получена от сервера и загружена.');
+                    resolve();
+                } else {
+                    console.error('Ошибка: полученные данные карты некорректны.');
+                    resolve(); // Завершаем даже в случае ошибки, чтобы избежать зависания
+                }
+            });
+        });
     },
 
     renderMap: function() {
@@ -59,7 +62,7 @@ const mapModule = {
                 cell.dataset.x = x;
                 cell.dataset.y = y;
         
-                if (this.mapData[y][x] === 1) {
+                if (this.mapData[y][x].type === 'wall') {
                     cell.classList.add('wall');
                 } else {
                     cell.classList.add('passage');

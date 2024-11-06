@@ -10,8 +10,9 @@ const roomTimerServer = require('./roomTimerServer');
 const buildingManager = require('./buildingCheck');
 const playerAttributes = require('./playerAttributes');
 const enemyManager = require('./enemyManager');
-
 const handleMap = require('./mapServer');
+const handlePlayerMovement = require('./playerMovementServer'); 
+
 const { format } = require('path');
 const app = express();
 const server = http.createServer(app);
@@ -22,10 +23,12 @@ app.use(express.static('public'));
 io.on('connection', (socket) => {
     console.log(`Player connected: ${socket.id}`);
     handleLobby(socket, io);
+    handleMap(socket, io);
     playersServer(io);
     playerResourcesServer(io);
     roomTimerServer(io);
     handleMap(socket, io);
+    handlePlayerMovement(socket, io);
     socket.on('startGame', () => {
         console.log("Game started, initializing enemy manager...");
         enemyManager.initializeEnemyManager(io);

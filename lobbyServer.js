@@ -81,15 +81,15 @@ function handleLobby(socket, io) {
             if (player && !player.isReady) {
                 player.isReady = true;
                 room.readyCount++;
-                console.log(`Player ${socket.id} is now ready. Updated readyCount: ${room.readyCount}, Total players: ${room.players.length}`);
+              //  console.log(`Player ${socket.id} is now ready. Updated readyCount: ${room.readyCount}, Total players: ${room.players.length}`);
                 io.to(room.name).emit('playerJoined', room.players);
     
                 if (room.readyCount === room.players.length && room.players.length > 0) {
-                    console.log(`All players in room ${room.name} are ready. Emitting 'allPlayersReady' event.`);
+                 //   console.log(`All players in room ${room.name} are ready. Emitting 'allPlayersReady' event.`);
                     io.to(room.name).emit('allPlayersReady');
                 }
             } else {
-                console.log(`Player ${socket.id} was already marked as ready or not found.`);
+            //    console.log(`Player ${socket.id} was already marked as ready or not found.`);
             }
         } else {
             console.log(`Room not found for player ${socket.id}.`);

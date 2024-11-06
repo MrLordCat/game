@@ -5,13 +5,19 @@ import enemyReceiverModule from '../enemyReceiverModule.js';
 import enemyRendererModule from '../enemyRendererModule.js';
 
 const lobbyUI = {
-    selectedMap: null, // Хранит выбранную карту
+    selectedMap: null,
 
     // Функция для выбора карты
     selectMap: function(mapData) {
         console.log("Карта выбрана:", mapData);
         this.selectedMap = mapData;
         window.gameCore.lobby.selectedMap = mapData; // Сохраняем карту в gameCore
+        this.uploadMapToServer(mapData); // Загружаем карту на сервер
+    },
+
+    uploadMapToServer: function(mapData) {
+        console.log('Uploading custom map to server...');
+        window.socket.emit('uploadMap', mapData); // Отправка карты на сервер
     },
     init: function() {
         document.getElementById('readyButton').addEventListener('click', () => lobbyActions.onReady());
@@ -51,7 +57,7 @@ const lobbyUI = {
         }, 1000);
     },
 
-    onGameStarted: function() {
+async onGameStarted() {
         console.log('The game has started! Handling game start.');
         
         gameCore.updateGameSettings({ isGameActive: true });
@@ -62,12 +68,7 @@ const lobbyUI = {
             
         if (typeof mapModule !== 'undefined') {
             console.log('Инициализация карты...');
-            if (window.gameCore.lobby.selectedMap) { // Проверяем, выбрана ли пользовательская карта
-                console.log('Загрузка пользовательской карты...');
-                mapModule.loadCustomMap(window.gameCore.lobby.selectedMap); // Загружаем выбранную карту
-            } else {
-                mapModule.init(); // Загружаем стандартную карту, если пользовательская не выбрана
-            }
+            await mapModule.init(); // Просто вызываем инициализацию карты, сервер решит, какую карту отправить
         }
         if (typeof buildingManager !== 'undefined') {
             buildingManager.init(socket, this.roomName, buildingSyncClient);
