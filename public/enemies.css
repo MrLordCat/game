@@ -3,12 +3,13 @@
 /* Базовый стиль для врагов */
 .enemy {
     position: absolute;
-    background-color: red; /* Цвет для обозначения врага */
+    background-color: red;
     border: 2px solid darkred;
     opacity: 0.8;
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    transition: left 0.3s ease, top 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
     box-sizing: border-box;
 }
+
 
 /* Эффект при наведении на врага */
 .enemy:hover {

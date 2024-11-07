@@ -13,7 +13,7 @@ const enemyManager = require('./enemyManager');
 const handleMap = require('./mapServer');
 const { handlePlayerMovement, updateMapData } = require('./playerMovementServer'); 
 const overlayMapServer = require('./overlayMapServer'); 
-
+const { updateEnemyTargets } = require('./enemyManager');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
@@ -30,7 +30,7 @@ io.on('connection', (socket) => {
     activeSockets[socket.id] = socket;
     handleLobby(socket, io);
     handleMap(socket, io, updatePlayerMovementMap); // Передаем функцию для обновления карты
-    handlePlayerMovement(socket, io); // Подключаем обработчик передвижения
+    handlePlayerMovement(socket, io, updateEnemyTargets); // Подключаем обработчик передвижения
     socket.on('setTargetPosition', (targetPosition) => {
         const player = { x: targetPosition.x, y: targetPosition.y };
         enemyManager.updateEnemyTargets(player); // Обновляем цель для врагов
@@ -41,9 +41,9 @@ io.on('connection', (socket) => {
     playerAttributes.handleAttributes(socket);
     buildingManager.handleBuilding(socket, io);
     overlayMapServer(socket, io); 
-    socket.on('startGame', () => {
-        console.log("Game started, initializing enemy manager...");
-        enemyManager.initializeEnemyManager(io);
+    socket.on('startGame', ({ roomName }) => {
+        console.log(`Game started in room ${roomName}, initializing enemy manager...`);
+        enemyManager.initializeEnemyManager(io, roomName);
     });
 
     socket.on('disconnect', () => {

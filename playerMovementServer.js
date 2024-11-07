@@ -1,5 +1,4 @@
 // playerMovementServer.js
-
 const playersByRoom = {}; // Хранение игроков по комнатам
 const moveIntervals = {};
 const mapDataByRoom = {}; // Хранение основной карты по комнатам
@@ -23,7 +22,7 @@ function updateOverlayData(roomName, newOverlayMapData) {
     }
 }
 
-function handlePlayerMovement(socket, io) {
+function handlePlayerMovement(socket, io, updateEnemyTargets) {
     socket.on('initializePlayer', ({ roomName }) => {
         if (!roomName) {
             console.error("Error: roomName not provided in initializePlayer event");
@@ -53,7 +52,7 @@ function handlePlayerMovement(socket, io) {
             clearInterval(moveIntervals[socket.id]);
         }
 
-        moveIntervals[socket.id] = movePlayerToTarget(socket, io, player, targetPosition, roomName);
+        moveIntervals[socket.id] = movePlayerToTarget(socket, io, player, targetPosition, roomName, updateEnemyTargets);
     });
 
     socket.on('disconnect', () => {
@@ -82,8 +81,6 @@ function isWall(x, y, roomName) {
         if (mapData[y][x].type === 'wall') return true;
     }
 
-    // Проверка на наложение зданий
-   // console.log("CHECK IF overlay here", overlayMapData)
     return overlayMapData.some(building => {
         return (
             x >= building.x &&
@@ -94,7 +91,7 @@ function isWall(x, y, roomName) {
     });
 }
 
-function movePlayerToTarget(socket, io, player, targetPosition, roomName) {
+function movePlayerToTarget(socket, io, player, targetPosition, roomName, updateEnemyTargets) {
     return setInterval(() => {
         const deltaX = targetPosition.x - player.x;
         const deltaY = targetPosition.y - player.y;
@@ -109,6 +106,10 @@ function movePlayerToTarget(socket, io, player, targetPosition, roomName) {
 
         player.x = nextX;
         player.y = nextY;
+
+        // Используем updateEnemyTargets для обновления позиции врагов
+        updateEnemyTargets({ x: player.x, y: player.y }, roomName);
+
         io.to(roomName).emit('updatePlayers', playersByRoom[roomName]);
 
         if (player.x === targetPosition.x && player.y === targetPosition.y) {
@@ -124,4 +125,5 @@ module.exports = {
     updateMapData,
     updateOverlayData,
     playersByRoom,
+    isWall
 };

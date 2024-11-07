@@ -1,26 +1,42 @@
 // enemyManager.js
+const { isWall } = require('./playerMovementServer');
 
-const { isWall } = require('./playerMovementServer'); // Импортируем функцию isWall для проверки препятствий
 
-let enemies = [];
+const enemiesByRoom = {}; // Хранение врагов по комнатам
 const enemySizeOptions = [{ width: 2, height: 2 }, { width: 3, height: 3 }, { width: 4, height: 4 }];
-const spawnInterval = 5000;
-const moveInterval = 500;
-let playerPosition = { x: 50, y: 50 }; // Переменная для хранения актуальной позиции игрока
+const spawnInterval = 10000;
+const moveInterval = 300;
+let playerPositionsByRoom = {}; // Позиции игроков по комнатам
+const updateIntervals = {}; 
 
-function initializeEnemyManager(io) {
-    setInterval(() => updateEnemyPositions(io), moveInterval);
-    setInterval(() => spawnEnemy(io, playerPosition), spawnInterval);
+function initializeEnemyManager(io, roomName) {
+    if (!enemiesByRoom[roomName]) {
+        enemiesByRoom[roomName] = [];
+        playerPositionsByRoom[roomName] = { x: 50, y: 50 }; // Инициализируем начальную позицию игрока в комнате
+    }
+
+    // Проверка и запуск таймеров только если они еще не запущены
+    if (!updateIntervals[roomName]) {
+        updateIntervals[roomName] = {
+            moveInterval: setInterval(() => updateEnemyPositions(io, roomName), moveInterval),
+            spawnInterval: setInterval(() => spawnEnemy(io, playerPositionsByRoom[roomName], roomName), spawnInterval)
+        };
+    }
 }
 
-function updateEnemyTargets(newPlayerPosition) {
-    playerPosition = newPlayerPosition; // Обновляем позицию игрока
-    enemies.forEach(enemy => {
-        enemy.targetPosition = playerPosition;
+function updateEnemyTargets(newPlayerPosition, roomName) {
+    if (!enemiesByRoom[roomName]) {
+        enemiesByRoom[roomName] = []; // Убедимся, что комната инициализирована
+    }
+    playerPositionsByRoom[roomName] = newPlayerPosition; // Обновляем позицию игрока в комнате
+    
+    // Обновляем цели врагов в комнате
+    enemiesByRoom[roomName].forEach(enemy => {
+        enemy.targetPosition = newPlayerPosition;
     });
 }
 
-function spawnEnemy(io, playerPosition) {
+function spawnEnemy(io, playerPosition, roomName) {
     const size = enemySizeOptions[Math.floor(Math.random() * enemySizeOptions.length)];
     const newEnemy = {
         id: generateEnemyId(),
@@ -28,37 +44,43 @@ function spawnEnemy(io, playerPosition) {
         size: size,
         health: 100,
         target: 'player',
-        targetPosition: playerPosition // Устанавливаем текущую позицию игрока как цель
+        targetPosition: playerPosition
     };
-    enemies.push(newEnemy);
-    io.emit('newEnemy', newEnemy);
+    enemiesByRoom[roomName].push(newEnemy);
+    io.to(roomName).emit('newEnemy', newEnemy);
 }
 
-function updateEnemyPositions(io) {
-    enemies.forEach((enemy) => {
+function updateEnemyPositions(io, roomName) {
+    if (!enemiesByRoom[roomName]) {
+        enemiesByRoom[roomName] = []; // Убедимся, что комната инициализирована
+    }
+    enemiesByRoom[roomName].forEach((enemy) => {
         if (enemy.target === 'player' && enemy.targetPosition) {
-            moveEnemyToTarget(io, enemy, enemy.targetPosition);
+            moveEnemyToTarget(io, enemy, enemy.targetPosition, roomName);
         }
-        io.emit('updateEnemy', { id: enemy.id, position: enemy.position });
+        io.to(roomName).emit('updateEnemy', { id: enemy.id, position: enemy.position });
     });
 }
 
-// Функция движения врагов с учетом препятствий
-function moveEnemyToTarget(io, enemy, targetPosition) {
+function moveEnemyToTarget(io, enemy, targetPosition, roomName) {
     const nextX = enemy.position.x + Math.sign(targetPosition.x - enemy.position.x);
     const nextY = enemy.position.y + Math.sign(targetPosition.y - enemy.position.y);
 
-    // Проверка на препятствие
-    if (isWall(nextX, nextY)) {
-        return; // Останавливаем движение, если впереди стена
+    // Проверяем все клетки, которые занимает враг
+    for (let dx = 0; dx < enemy.size.width; dx++) {
+        for (let dy = 0; dy < enemy.size.height; dy++) {
+            if (isWall(nextX + dx, nextY + dy, roomName)) {
+                return; // Останавливаем движение, если хотя бы одна из клеток занята
+            }
+        }
     }
 
     enemy.position.x = nextX;
     enemy.position.y = nextY;
 
-    // Обновляем позицию на клиенте
-    io.emit('updateEnemy', { id: enemy.id, position: enemy.position });
+    io.to(roomName).emit('updateEnemy', { id: enemy.id, position: enemy.position });
 }
+
 
 function generateEnemyId() {
     return 'enemy_' + Math.random().toString(36).substr(2, 9);
@@ -67,5 +89,5 @@ function generateEnemyId() {
 module.exports = {
     initializeEnemyManager,
     updateEnemyTargets,
-    enemies,
+    enemiesByRoom,
 };
