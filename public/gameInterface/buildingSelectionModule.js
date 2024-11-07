@@ -4,9 +4,18 @@ import bottomInterfaceModule from './bottomInterface.js';
 
 const buildingSelectionModule = {
     selectedBuilding: null,
-
     init: function() {
         console.log("Building selection module initialized");
+
+        // Обработчик для кликов на карте
+        document.getElementById('mapContainer').addEventListener('click', (event) => {
+            const target = event.target;
+
+            if (target.classList.contains('player')) {
+                // Если кликнули на игрока, отменяем выбор здания
+                this.deselectBuilding();
+            }
+        });
     },
 
     selectBuilding: function(buildingElement, buildingId) {

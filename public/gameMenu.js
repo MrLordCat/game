@@ -1,3 +1,5 @@
+// gameMenu.js
+
 const gameMenuModule = {
     menuVisible: false,
 
@@ -11,14 +13,22 @@ const gameMenuModule = {
         const resumeButton = document.getElementById('resumeButton');
         const mainMenuButton = document.getElementById('mainMenuButton');
 
-        // Привязка обработчиков событий к кнопкам
         resumeButton.addEventListener('click', this.hideMenu.bind(this));
         mainMenuButton.addEventListener('click', this.returnToMainMenu.bind(this));
     },
 
     handleKeyPress: function(event) {
-        if (event.key === 'Escape' && gameCore.gameSettings.isGameActive) { // Используем gameCore
-            this.menuVisible ? this.hideMenu() : this.showMenu();
+        if (event.key === 'Escape' && gameCore.gameSettings.isGameActive) {
+            // Проверяем на наличие активного призрака здания
+            if (mapModule.buildingManager.ghostBuilding) {
+                mapModule.buildingManager.cancelGhostPlacement(); // Отменяем призрак
+                console.log("Canceled ghost building placement due to ESC key");
+            } else if (buildingSelectionModule.selectedBuilding) { // Проверка на выбранное здание
+                buildingSelectionModule.deselectBuilding();
+                console.log("Deselected building interface due to ESC key");
+            } else {
+                this.menuVisible ? this.hideMenu() : this.showMenu(); // Открываем или закрываем меню игры
+            }
         }
     },
 
@@ -44,10 +54,10 @@ const gameMenuModule = {
         document.getElementById('menu').style.display = 'block';
         
         if (typeof bottomInterfaceModule !== 'undefined') {
-            bottomInterfaceModule.hideInterface(); // Скрыть нижний интерфейс
+            bottomInterfaceModule.hideInterface();
         }
         
-        gameCore.updateGameSettings({ isGameActive: false }); // Завершаем игру
+        gameCore.updateGameSettings({ isGameActive: false });
         
         socket.emit('leaveRoom', { roomName: gameCore.lobby.roomName });
         gameCore.updateLobby({

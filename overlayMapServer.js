@@ -12,7 +12,6 @@ module.exports = (socket, io) => {
     socket.on('requestOverlayMap', ({ roomName }) => {
         if (!roomOverlays[roomName]) roomOverlays[roomName] = [];
         socket.emit('loadOverlayMap', roomOverlays[roomName]);
-        console.log(`Overlay map data sent to client for room ${roomName}.`);
     });
     socket.on('requestBuildingData', ({ roomName, buildingId }) => {
         if (!roomOverlays[roomName]) roomOverlays[roomName] = [];
@@ -27,7 +26,6 @@ module.exports = (socket, io) => {
             if (fullBuildingData) {
                 const buildingData = { ...basicBuildingData, ...fullBuildingData };
                 socket.emit('buildingDataResponse', buildingData);
-                console.log("Отправка полных данных о здании:", buildingData);
             } else {
                 console.error(`Building data not found for ID ${buildingId} in buildingModule.`);
                 socket.emit('buildingDataResponse', null);

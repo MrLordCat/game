@@ -2,22 +2,33 @@
 
 import overlayMapModule from './overlayMap.js';
 import mapModule from './map.js';
-import buildingCheck from '../buildCheck.js'; // Импорт buildingCheck
+import buildingCheck from '../buildCheck.js';
 
 mapModule.buildingManager = {
+    ghostBuilding: null,
+
     init: function() {
         overlayMapModule.init();  // Инициализация слоя для построек
         console.log('Building Manager initialized');
+
+        // Обработка клавиши ESC для отмены призрака
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && this.ghostBuilding) {
+                this.cancelGhostPlacement();
+            }
+        });
     },
 
     startGhostPlacement: function(building) {
-        const ghostBuilding = document.createElement('div');
-        ghostBuilding.className = `ghost-building ${building.name}`;
-        ghostBuilding.style.position = 'absolute';
-        ghostBuilding.style.width = `${building.size.width * 10}px`;
-        ghostBuilding.style.height = `${building.size.height * 10}px`;
-        ghostBuilding.style.opacity = '0.5';
-        document.body.appendChild(ghostBuilding);
+        this.cancelGhostPlacement(); // Отменяем старый призрак, если он есть
+
+        this.ghostBuilding = document.createElement('div');
+        this.ghostBuilding.className = `ghost-building ${building.name}`;
+        this.ghostBuilding.style.position = 'absolute';
+        this.ghostBuilding.style.width = `${building.size.width * 10}px`;
+        this.ghostBuilding.style.height = `${building.size.height * 10}px`;
+        this.ghostBuilding.style.opacity = '0.5';
+        document.body.appendChild(this.ghostBuilding);
 
         const mapContainer = document.getElementById('mapContainer');
         const containerRect = mapContainer.getBoundingClientRect();
@@ -44,8 +55,8 @@ mapModule.buildingManager = {
                     y = Math.floor(containerRect.height / 10 - building.size.height);
                 }
 
-                ghostBuilding.style.left = `${containerRect.left + x * 10}px`;
-                ghostBuilding.style.top = `${containerRect.top + y * 10}px`;
+                this.ghostBuilding.style.left = `${containerRect.left + x * 10}px`;
+                this.ghostBuilding.style.top = `${containerRect.top + y * 10}px`;
             }
         });
 
@@ -64,11 +75,28 @@ mapModule.buildingManager = {
                 }
 
                 buildingCheck.confirmBuild(building, x, y);
-                ghostBuilding.remove();
+                this.cancelGhostPlacement();
             }
+        }, { once: true });
+
+        // Обработчик для правого клика для отмены призрака
+        mapContainer.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+            this.cancelGhostPlacement();
         }, { once: true });
     },
 
+    cancelGhostPlacement: function() {
+        if (this.ghostBuilding) {
+            this.ghostBuilding.remove();
+            this.ghostBuilding = null;
+            console.log("Building ghost placement canceled");
+
+            // Восстанавливаем pointer-events
+            document.getElementById('overlayContainer').style.pointerEvents = '';
+            document.getElementById('enemyContainer').style.pointerEvents = '';
+        }
+    },
 
     placeBuilding: function(x, y, building) {
         console.log("Place Building map", x, y, building);
