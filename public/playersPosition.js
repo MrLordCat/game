@@ -61,6 +61,7 @@ const playerPositionModule = {
         }
     
         const playerId = window.socket.id;
+        const roomName = window.gameCore.lobby.roomName;
     
         for (const otherPlayerId in players) {
             if (otherPlayerId === playerId) continue;
@@ -82,6 +83,9 @@ const playerPositionModule = {
             otherPlayerElement.style.left = `${playerData.x * 10}px`;
             otherPlayerElement.style.top = `${playerData.y * 10}px`;
         }
+    
+        // Отправка позиции игроков в рамках комнаты
+        window.socket.emit('updatePlayerPositionInRoom', { roomName, players });
     }
 };
 
