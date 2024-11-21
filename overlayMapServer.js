@@ -35,19 +35,22 @@ module.exports = (socket, io) => {
             socket.emit('buildingDataResponse', null);
         }
     });
-    socket.on('placeBuilding', ({ roomName, x, y, building }) => {
+    socket.on('placeBuilding', ({ roomName, x, y, building, ownerId }) => {
         if (!roomOverlays[roomName]) roomOverlays[roomName] = [];
         
         const mapData = getRoomMap(roomName);
         const players = playersByRoom[roomName] || {};
-
+    
         if (isPositionBlocked(x, y, building.size, mapData, players, roomName)) {
             socket.emit('placementFailed', { x, y });
             console.log(`Position (${x}, ${y}) is blocked in room ${roomName}, cannot place building.`);
             return;
         }
-
+    
+        const buildingId = generateBuildingId();
         const newBuilding = {
+            buildingId, // Уникальный идентификатор здания
+            ownerId,    // ID игрока, которому принадлежит здание
             x,
             y,
             width: building.size.width,
@@ -57,12 +60,17 @@ module.exports = (socket, io) => {
             armor: building.armor,
             hasMenu: building.hasMenu,
         };
-    
+        
         roomOverlays[roomName].push(newBuilding);
         io.to(roomName).emit('updateOverlayMap', roomOverlays[roomName]);
         updateOverlayData(roomName, roomOverlays[roomName]); // Обновляем overlay данные для playerMovementServer
+        console.log(`Building placed at (${x}, ${y}) in room ${roomName} by player ${ownerId} with ID ${buildingId}.`);
     });
-
+    
+    function generateBuildingId() {
+        return 'building_' + Math.random().toString(36).substr(2, 9);
+    }
+    
     function isPositionBlocked(x, y, size, mapData, players, roomName) {
         const isOverlayBlocked = (roomOverlays[roomName] || []).some(building => {
             return (

@@ -99,8 +99,10 @@ mapModule.buildingManager = {
     },
 
     placeBuilding: function(x, y, building) {
-        console.log("Place Building map", x, y, building);
-        overlayMapModule.placeBuilding(x, y, building);
+        const ownerId = window.gameCore.lobby.playerName; // Используем текущего игрока как владельца
+        const buildingWithOwner = { ...building, ownerId };
+        console.log("Placing building:", buildingWithOwner);
+        overlayMapModule.placeBuilding(x, y, buildingWithOwner);
     }
 };
 

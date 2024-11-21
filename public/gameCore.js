@@ -18,7 +18,7 @@ window.gameCore = {
     enemies: {},
     gameSettings: {
         isGameActive: false,
-        timer: 0,  // Хранение времени таймера в секундах
+        timer: 0, 
         resources: {
             gold: 0,
             wood: 0,

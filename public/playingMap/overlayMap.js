@@ -21,12 +21,20 @@ const overlayMapModule = {
     },
 
     placeBuilding: function(x, y, building) {
-        const roomName = window.gameCore.lobby.roomName; // Используем roomName из gameCore
-        window.socket.emit('placeBuilding', { x, y, building, roomName });
+        const roomName = window.gameCore.lobby.roomName; // Имя комнаты
+        const playerName = window.gameCore.lobby.playerName; // Имя игрока
+    
+        if (!playerName) {
+            console.error("Player name is not set. Cannot place building.");
+            return;
+        }
+    
+        window.socket.emit('placeBuilding', { x, y, building, roomName, ownerId: playerName });
     },
+    
 
     clearBuildings: function() {
-        const roomName = window.gameCore.lobby.roomName; // Используем roomName из gameCore
+        const roomName = window.gameCore.lobby.roomName; 
         window.socket.emit('clearOverlayMap', { roomName });
         this.buildingsCoordinates = [];
     },
@@ -38,20 +46,23 @@ const overlayMapModule = {
             return;
         }
         overlayContainer.innerHTML = ''; // Очищаем контейнер перед рендерингом
-
-        buildings.forEach(({ x, y, width, height, name }) => {
+    
+        buildings.forEach(({ x, y, width, height, name, buildingId, ownerId }) => {
             const buildingElement = document.createElement('div');
             buildingElement.className = `building-overlay ${name}`;
+            buildingElement.dataset.buildingId = buildingId;
+            buildingElement.dataset.ownerId = ownerId;
             buildingElement.style.position = 'absolute';
             buildingElement.style.width = `${width * 10}px`;
             buildingElement.style.height = `${height * 10}px`;
             buildingElement.style.left = `${x * 10}px`;
             buildingElement.style.top = `${y * 10}px`;
-
+    
             buildingElement.addEventListener('click', () => {
+                console.log(`Building ${buildingId} owned by ${ownerId} clicked`);
                 buildingSelectionModule.selectBuilding(buildingElement, name);
             });
-
+    
             overlayContainer.appendChild(buildingElement);
         });
     }
