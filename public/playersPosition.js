@@ -51,9 +51,7 @@ const playerPositionModule = {
 
     updateOtherPlayers: function(players) {
         if (!window.gameCore.gameSettings.isGameActive) return;
-    
-        console.log('Updating other players:', players);
-    
+
         const mapContainer = document.getElementById('mapContainer');
         if (!mapContainer) {
             console.error('mapContainer not found');

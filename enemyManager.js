@@ -7,6 +7,7 @@ const spawnInterval = 10000;
 const moveInterval = 300;
 let playerPositionsByRoom = {}; 
 const updateIntervals = {}; 
+const maxEnemiesPerRoom = 2;
 
 function initializeEnemyManager(io, roomName) {
     if (!enemiesByRoom[roomName]) {
@@ -31,16 +32,19 @@ function updateEnemyTargets(newPlayerPosition, roomName) {
 
     enemiesByRoom[roomName].forEach(enemy => {
         enemy.targetPosition = newPlayerPosition;
-        // Передаем данные карты в aStar напрямую
         const mapData = mapDataByRoom[roomName];
         const overlayMapData = overlayMapDataByRoom[roomName];
         if (mapData && overlayMapData) {
-            enemy.path = aStar(enemy.position, enemy.targetPosition, mapData, overlayMapData);
+            enemy.path = aStar(enemy.position, enemy.targetPosition, mapData, overlayMapData, enemy.size);
         }
     });
 }
 
 function spawnEnemy(io, playerPosition, roomName) {
+    if (enemiesByRoom[roomName].length >= maxEnemiesPerRoom) {
+        return;
+    }
+
     const size = enemySizeOptions[Math.floor(Math.random() * enemySizeOptions.length)];
     const newEnemy = {
         id: generateEnemyId(),
@@ -61,7 +65,8 @@ function updateEnemyPositions(io, roomName) {
     const overlayMapData = overlayMapDataByRoom[roomName] ? JSON.parse(JSON.stringify(overlayMapDataByRoom[roomName])) : [];
 
     enemiesByRoom[roomName].forEach((enemy) => {
-        if (enemy.path && enemy.path.length > 0) {
+        if (enemy.path && enemy.path.length > 0) {  
+        
             const nextPosition = enemy.path.shift();
 
             if (canMoveToPosition(nextPosition, enemy.size, roomName, mapData, overlayMapData)) {
@@ -69,6 +74,7 @@ function updateEnemyPositions(io, roomName) {
             }
 
             io.to(roomName).emit('updateEnemy', { id: enemy.id, position: enemy.position });
+            console.log("Enemy position: ", { id: enemy.id, position: enemy.position })
         } else if (enemy.target === 'player' && enemy.targetPosition) {
             enemy.path = aStar(enemy.position, enemy.targetPosition, mapData, overlayMapData);
         }
@@ -81,7 +87,15 @@ function updateEnemyPositions(io, roomName) {
 function canMoveToPosition(position, size, roomName, localMapData, localOverlayMapData) {
     for (let dx = 0; dx < size.width; dx++) {
         for (let dy = 0; dy < size.height; dy++) {
-            if (isWall(position.x + dx, position.y + dy, localMapData, localOverlayMapData)) {
+            const checkX = position.x + dx;
+            const checkY = position.y + dy;
+
+            if (checkX < 0 || checkY < 0 || checkY >= localMapData.length || checkX >= localMapData[0].length) {
+                return false;
+            }
+
+    
+            if (isWall(checkX, checkY, localMapData, localOverlayMapData)) {
                 return false;
             }
         }
