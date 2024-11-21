@@ -2,12 +2,12 @@ const { isWall, updateMapData, updateOverlayData, mapDataByRoom, overlayMapDataB
 const { aStar } = require('./pathfinding');
 
 const enemiesByRoom = {}; 
-const enemySizeOptions = [{ width: 2, height: 2 }, { width: 3, height: 3 }, { width: 4, height: 4 }];
+const enemySizeOptions = [{ width: 3, height: 3 }, { width: 4, height: 4 }];
 const spawnInterval = 10000;
 const moveInterval = 300;
 let playerPositionsByRoom = {}; 
 const updateIntervals = {}; 
-const maxEnemiesPerRoom = 2;
+const maxEnemiesPerRoom = 4;
 
 function initializeEnemyManager(io, roomName) {
     if (!enemiesByRoom[roomName]) {
@@ -36,6 +36,7 @@ function updateEnemyTargets(newPlayerPosition, roomName) {
         const overlayMapData = overlayMapDataByRoom[roomName];
         if (mapData && overlayMapData) {
             enemy.path = aStar(enemy.position, enemy.targetPosition, mapData, overlayMapData, enemy.size);
+
         }
     });
 }
@@ -76,7 +77,8 @@ function updateEnemyPositions(io, roomName) {
             io.to(roomName).emit('updateEnemy', { id: enemy.id, position: enemy.position });
             console.log("Enemy position: ", { id: enemy.id, position: enemy.position })
         } else if (enemy.target === 'player' && enemy.targetPosition) {
-            enemy.path = aStar(enemy.position, enemy.targetPosition, mapData, overlayMapData);
+            enemy.path = aStar(enemy.position, enemy.targetPosition, mapData, overlayMapData, enemy.size);
+
         }
     });
 }

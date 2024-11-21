@@ -1,39 +1,35 @@
 // pathfinding.js
-function aStar(start, goal, mapData, overlayMapData) {
+function aStar(start, goal, mapData, overlayMapData, size = { width: 1, height: 1 }) {
     const openSet = new Set([JSON.stringify(start)]);
     const cameFrom = new Map();
     const gScore = new Map();
     const fScore = new Map();
-    
+
     gScore.set(JSON.stringify(start), 0);
     fScore.set(JSON.stringify(start), heuristic(start, goal));
-
 
     while (openSet.size > 0) {
         let currentStr = getLowestFScore(openSet, fScore);
         if (!currentStr) {
-
             return []; // Путь не найден
         }
 
         let current = JSON.parse(currentStr);
 
         if (current.x === goal.x && current.y === goal.y) {
-
             return reconstructPath(cameFrom, current);
         }
 
         openSet.delete(currentStr);
-        
-        for (let neighbor of getNeighbors(current, mapData, overlayMapData)) {
+
+        for (let neighbor of getNeighbors(current, mapData, overlayMapData, size)) {
             const tentativeGScore = gScore.get(currentStr) + 1;
 
             if (tentativeGScore < (gScore.get(JSON.stringify(neighbor)) || Infinity)) {
-                // Убедимся, что начальная точка не добавляется в cameFrom
                 if (!(neighbor.x === start.x && neighbor.y === start.y)) {
                     cameFrom.set(JSON.stringify(neighbor), current);
                 }
-                
+
                 gScore.set(JSON.stringify(neighbor), tentativeGScore);
                 fScore.set(JSON.stringify(neighbor), tentativeGScore + heuristic(neighbor, goal));
 
@@ -45,7 +41,6 @@ function aStar(start, goal, mapData, overlayMapData) {
     }
     return []; // Путь не найден
 }
-
 
 
 
@@ -69,38 +64,53 @@ function getLowestFScore(openSet, fScore) {
     return lowestNode;
 }
 
-function getNeighbors(node, mapData, overlayMapData) {
+function getNeighbors(node, mapData, overlayMapData, size) {
     const directions = [
-        { x: 1, y: 0 }, { x: -1, y: 0 }, 
-        { x: 0, y: 1 }, { x: 0, y: -1 },  
-        { x: 1, y: 1 }, { x: -1, y: -1 }, 
+        { x: 1, y: 0 }, { x: -1, y: 0 },
+        { x: 0, y: 1 }, { x: 0, y: -1 },
+        { x: 1, y: 1 }, { x: -1, y: -1 },
         { x: 1, y: -1 }, { x: -1, y: 1 }
     ];
     const neighbors = [];
 
     for (let dir of directions) {
         const neighbor = { x: node.x + dir.x, y: node.y + dir.y };
-        if (!isWall(neighbor.x, neighbor.y, mapData, overlayMapData)) {
+
+        if (!isWall(neighbor.x, neighbor.y, mapData, overlayMapData, size)) {
             neighbors.push(neighbor);
         }
     }
     return neighbors;
 }
 
-function isWall(x, y, mapData, overlayMapData = []) {
-    // Проверка стены в основной карте
-    if (y >= 0 && y < mapData.length && x >= 0 && x < mapData[0].length) {
-        if (mapData[y][x].type === 'wall') return true;
+function isWall(x, y, mapData, overlayMapData = [], size = { width: 1, height: 1 }) {
+    for (let dx = 0; dx < size.width; dx++) {
+        for (let dy = 0; dy < size.height; dy++) {
+            const checkX = x + dx;
+            const checkY = y + dy;
+
+            if (checkY < 0 || checkY >= mapData.length || checkX < 0 || checkX >= mapData[0].length) {
+                return true; // Если за пределами карты, это стена
+            }
+
+
+            if (mapData[checkY][checkX]?.type === 'wall') {
+                return true;
+            }
+            if (overlayMapData.some(building => (
+                checkX >= building.x &&
+                checkX < building.x + building.width &&
+                checkY >= building.y &&
+                checkY < building.y + building.height
+            ))) {
+                return true;
+            }
+        }
     }
 
-    // Проверка overlay карты, если overlayMapData не пуста
-    return overlayMapData.some(building => (
-        x >= building.x &&
-        x < building.x + building.width &&
-        y >= building.y &&
-        y < building.y + building.height
-    ));
+    return false; 
 }
+
 
 
 function reconstructPath(cameFrom, current) {
@@ -120,5 +130,9 @@ function reconstructPath(cameFrom, current) {
 
     return path;
 }
-
+function heuristic(pos0, pos1) {
+    const dx = Math.abs(pos0.x - pos1.x);
+    const dy = Math.abs(pos0.y - pos1.y);
+    return Math.max(dx, dy);
+}
 module.exports = { aStar };
