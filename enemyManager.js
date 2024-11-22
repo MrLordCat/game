@@ -93,21 +93,15 @@ function updateEnemyPositions(io, roomName) {
 function attackBuilding(enemy, io, roomName) {
     if (enemy.targetBuilding) {
         const building = enemy.targetBuilding;
+        const destroyed = playerBuildings.attackBuilding(roomName, building.buildingId, 10 , io); // Наносим 10 урона
 
-        building.health -= 10; 
-        console.log(`Enemy ${enemy.id} attacks building ${building.buildingId}. Health: ${building.health}`);
-
-        if (building.health <= 0) {
-            console.log(`Building ${building.buildingId} destroyed by enemy ${enemy.id}`);
-            playerBuildings.removeBuilding(roomName, building.buildingId);
+        if (destroyed) {
             const overlayIndex = overlayMapDataByRoom[roomName].findIndex(b => b.buildingId === building.buildingId);
             if (overlayIndex !== -1) {
                 overlayMapDataByRoom[roomName].splice(overlayIndex, 1);
             }
             io.to(roomName).emit('updateOverlayMap', overlayMapDataByRoom[roomName]);
             enemy.targetBuilding = null;
-        } else {
-            playerBuildings.updateBuilding(roomName, building.buildingId, { health: building.health });
         }
     }
 }
