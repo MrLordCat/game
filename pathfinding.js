@@ -93,22 +93,12 @@ function isWall(x, y, mapData, overlayMapData = [], size = { width: 1, height: 1
                 return true; // Если за пределами карты, это стена
             }
 
-
             if (mapData[checkY][checkX]?.type === 'wall') {
-                return true;
-            }
-            if (overlayMapData.some(building => (
-                checkX >= building.x &&
-                checkX < building.x + building.width &&
-                checkY >= building.y &&
-                checkY < building.y + building.height
-            ))) {
-                return true;
+                return true; // Это стена
             }
         }
     }
-
-    return false; 
+    return false; // Игнорируем здания
 }
 
 

@@ -61,28 +61,50 @@ function spawnEnemy(io, playerPosition, roomName) {
 }
 
 function updateEnemyPositions(io, roomName) {
-   
     const mapData = mapDataByRoom[roomName] ? JSON.parse(JSON.stringify(mapDataByRoom[roomName])) : [];
     const overlayMapData = overlayMapDataByRoom[roomName] ? JSON.parse(JSON.stringify(overlayMapDataByRoom[roomName])) : [];
 
     enemiesByRoom[roomName].forEach((enemy) => {
         if (enemy.path && enemy.path.length > 0) {  
-        
             const nextPosition = enemy.path.shift();
 
-            if (canMoveToPosition(nextPosition, enemy.size, roomName, mapData, overlayMapData)) {
+            // Проверка столкновения со зданием
+            if (isBuilding(nextPosition, overlayMapData, enemy.size)) {
+                console.log(`Enemy ${enemy.id} stopped due to building at position`, nextPosition);
+                enemy.path = []; // Очищаем путь, чтобы враг остановился
+                return;
+            }
+
+            if (canMoveToPosition(nextPosition, enemy.size, roomName, mapData, [])) {
                 enemy.position = nextPosition;
             }
 
             io.to(roomName).emit('updateEnemy', { id: enemy.id, position: enemy.position });
-            console.log("Enemy position: ", { id: enemy.id, position: enemy.position })
         } else if (enemy.target === 'player' && enemy.targetPosition) {
-            enemy.path = aStar(enemy.position, enemy.targetPosition, mapData, overlayMapData, enemy.size);
-
+            // Построение пути до игрока с игнорированием зданий
+            enemy.path = aStar(enemy.position, enemy.targetPosition, mapData, [], enemy.size);
         }
     });
 }
 
+function isBuilding(position, overlayMapData, size) {
+    for (let dx = 0; dx < size.width; dx++) {
+        for (let dy = 0; dy < size.height; dy++) {
+            const checkX = position.x + dx;
+            const checkY = position.y + dy;
+
+            if (overlayMapData.some(building => (
+                checkX >= building.x &&
+                checkX < building.x + building.width &&
+                checkY >= building.y &&
+                checkY < building.y + building.height
+            ))) {
+                return true; // Здание найдено
+            }
+        }
+    }
+    return false;
+}
 
 
 
