@@ -3,7 +3,6 @@ const playerResourcesServer = require('./playerResourcesServer');
 
 const buildingManager = {
     checkResourcesForBuilding: function(socket, buildingName) {
-        console.log("Проверка ресурса для:", buildingName);
         const buildings = buildingModule.getAvailableBuildings();
 
         // Поиск здания по внутреннему имени (например, 'W' для стены)
@@ -15,7 +14,6 @@ const buildingManager = {
         const playerResources = playerResourcesServer.getResources(socket.id);
 
         if (playerResources.wood >= cost.wood && playerResources.gold >= cost.gold) {
-            console.log("Успешно:", buildingName);
             return { success: true, building: building, size: building.size };
         } else {
             return { success: false, message: "Not enough resources." };
@@ -38,7 +36,6 @@ const buildingManager = {
                 wood: playerResources.wood - cost.wood,
                 gold: playerResources.gold - cost.gold,
             });
-            console.log("Build")
             return { success: true };
         } else {
             return { success: false, message: "Resources depleted during placement." };

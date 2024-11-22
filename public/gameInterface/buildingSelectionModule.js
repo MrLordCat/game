@@ -54,6 +54,8 @@ window.socket.on('buildingDataResponse', (buildingData) => {
     }
 });
 
+
+
 window.buildingSelectionModule = buildingSelectionModule;
 
 export default buildingSelectionModule;

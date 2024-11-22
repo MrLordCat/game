@@ -1,5 +1,6 @@
 const { isWall, updateMapData, updateOverlayData, mapDataByRoom, overlayMapDataByRoom } = require('./playerMovementServer');
 const { aStar } = require('./pathfinding');
+const playerBuildings = require('./playerBuildings');
 
 const enemiesByRoom = {}; 
 const enemySizeOptions = [{ width: 3, height: 3 }, { width: 4, height: 4 }];
@@ -74,7 +75,7 @@ function updateEnemyPositions(io, roomName) {
             if (building) {
                 console.log(`Enemy ${enemy.id} stopped due to building:`, building);
                 enemy.path = []; 
-                enemy.targetBuilding = building; 
+                enemy.targetBuilding = building;
                 return;
             }
 
@@ -93,20 +94,24 @@ function attackBuilding(enemy, io, roomName) {
     if (enemy.targetBuilding) {
         const building = enemy.targetBuilding;
 
-        // Логика атаки
-        building.health -= 10; // Уменьшаем здоровье здания
+        building.health -= 10; 
         console.log(`Enemy ${enemy.id} attacks building ${building.buildingId}. Health: ${building.health}`);
 
-        // Если здоровье здания падает до 0, удаляем его
         if (building.health <= 0) {
             console.log(`Building ${building.buildingId} destroyed by enemy ${enemy.id}`);
-            const overlayMapData = overlayMapDataByRoom[roomName];
-            overlayMapData.splice(overlayMapData.indexOf(building), 1); // Удаляем здание из overlay
-            io.to(roomName).emit('updateOverlayMap', overlayMapData);
-            enemy.targetBuilding = null; // Сбрасываем цель врага
+            playerBuildings.removeBuilding(roomName, building.buildingId);
+            const overlayIndex = overlayMapDataByRoom[roomName].findIndex(b => b.buildingId === building.buildingId);
+            if (overlayIndex !== -1) {
+                overlayMapDataByRoom[roomName].splice(overlayIndex, 1);
+            }
+            io.to(roomName).emit('updateOverlayMap', overlayMapDataByRoom[roomName]);
+            enemy.targetBuilding = null;
+        } else {
+            playerBuildings.updateBuilding(roomName, building.buildingId, { health: building.health });
         }
     }
 }
+
 function isBuilding(position, overlayMapData, size) {
     for (let dx = 0; dx < size.width; dx++) {
         for (let dy = 0; dy < size.height; dy++) {

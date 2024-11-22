@@ -60,8 +60,9 @@ const overlayMapModule = {
     
             buildingElement.addEventListener('click', () => {
                 console.log(`Building ${buildingId} owned by ${ownerId} clicked`);
-                buildingSelectionModule.selectBuilding(buildingElement, name);
+                buildingSelectionModule.selectBuilding(buildingElement, buildingId); 
             });
+            
     
             overlayContainer.appendChild(buildingElement);
         });
