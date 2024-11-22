@@ -65,13 +65,16 @@ function updateEnemyPositions(io, roomName) {
     const overlayMapData = overlayMapDataByRoom[roomName] ? JSON.parse(JSON.stringify(overlayMapDataByRoom[roomName])) : [];
 
     enemiesByRoom[roomName].forEach((enemy) => {
-        if (enemy.path && enemy.path.length > 0) {  
+        if (enemy.targetBuilding) {
+            attackBuilding(enemy, io, roomName); // Атака здания
+        } else if (enemy.path && enemy.path.length > 0) {  
             const nextPosition = enemy.path.shift();
 
-            // Проверка столкновения со зданием
-            if (isBuilding(nextPosition, overlayMapData, enemy.size)) {
-                console.log(`Enemy ${enemy.id} stopped due to building at position`, nextPosition);
-                enemy.path = []; // Очищаем путь, чтобы враг остановился
+            const building = isBuilding(nextPosition, overlayMapData, enemy.size);
+            if (building) {
+                console.log(`Enemy ${enemy.id} stopped due to building:`, building);
+                enemy.path = []; 
+                enemy.targetBuilding = building; 
                 return;
             }
 
@@ -81,30 +84,50 @@ function updateEnemyPositions(io, roomName) {
 
             io.to(roomName).emit('updateEnemy', { id: enemy.id, position: enemy.position });
         } else if (enemy.target === 'player' && enemy.targetPosition) {
-            // Построение пути до игрока с игнорированием зданий
             enemy.path = aStar(enemy.position, enemy.targetPosition, mapData, [], enemy.size);
         }
     });
 }
 
+function attackBuilding(enemy, io, roomName) {
+    if (enemy.targetBuilding) {
+        const building = enemy.targetBuilding;
+
+        // Логика атаки
+        building.health -= 10; // Уменьшаем здоровье здания
+        console.log(`Enemy ${enemy.id} attacks building ${building.buildingId}. Health: ${building.health}`);
+
+        // Если здоровье здания падает до 0, удаляем его
+        if (building.health <= 0) {
+            console.log(`Building ${building.buildingId} destroyed by enemy ${enemy.id}`);
+            const overlayMapData = overlayMapDataByRoom[roomName];
+            overlayMapData.splice(overlayMapData.indexOf(building), 1); // Удаляем здание из overlay
+            io.to(roomName).emit('updateOverlayMap', overlayMapData);
+            enemy.targetBuilding = null; // Сбрасываем цель врага
+        }
+    }
+}
 function isBuilding(position, overlayMapData, size) {
     for (let dx = 0; dx < size.width; dx++) {
         for (let dy = 0; dy < size.height; dy++) {
             const checkX = position.x + dx;
             const checkY = position.y + dy;
 
-            if (overlayMapData.some(building => (
-                checkX >= building.x &&
-                checkX < building.x + building.width &&
-                checkY >= building.y &&
-                checkY < building.y + building.height
-            ))) {
-                return true; // Здание найдено
+            const building = overlayMapData.find(b => (
+                checkX >= b.x &&
+                checkX < b.x + b.width &&
+                checkY >= b.y &&
+                checkY < b.y + b.height
+            ));
+
+            if (building) {
+                return building; 
             }
         }
     }
-    return false;
+    return null; 
 }
+
 
 
 
