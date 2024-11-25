@@ -26,7 +26,6 @@ const buildingSelectionModule = {
 
         const buildingData = window.gameCore.playerBuildings[buildingId];
         if (buildingData) {
-            console.log(`Получены данные для здания ${buildingId} из gameCore:`, buildingData);
             bottomInterfaceModule.showInterface();
             bottomInterfaceModule.updateBuildingInfo({
                 health: buildingData.health,
@@ -50,7 +49,6 @@ const buildingSelectionModule = {
 
 // Обработчик обновлений данных здания в реальном времени
 window.socket.on('buildingDataUpdated', (buildingData) => {
-    console.log("Обновлены данные о здании:", buildingData);
 
     // Обновляем данные здания в gameCore
     if (buildingData.buildingId) {

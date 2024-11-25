@@ -20,7 +20,6 @@ module.exports = (socket, io) => {
 
         if (isPositionBlocked(x, y, building.size, mapData, players, roomName)) {
             socket.emit('placementFailed', { x, y });
-            console.log(`Position (${x}, ${y}) is blocked in room ${roomName}, cannot place building.`);
             return;
         }
 

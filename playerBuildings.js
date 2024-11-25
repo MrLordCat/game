@@ -14,8 +14,6 @@ module.exports = {
         }
         roomOverlays[roomName].push(building);
 
-        console.log(`Building added:`, building);
-
         // Синхронизация с клиентами
         io.to(roomName).emit('updateOverlayMap', roomOverlays[roomName]);
         if (socket) {
@@ -37,9 +35,7 @@ module.exports = {
                 roomOverlays[roomName].splice(overlayIndex, 1);
             }
 
-            console.log(`Building removed:`, removed);
 
-            // Синхронизация с клиентами
             io.to(roomName).emit('updateOverlayMap', roomOverlays[roomName]);
         }
     },

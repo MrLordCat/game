@@ -13,7 +13,6 @@ const bottomInterfaceModule = {
     },
 
     init: function() {
-        console.log('Bottom interface initialized');
         this.hideInterface();
     },
 
