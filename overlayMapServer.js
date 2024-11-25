@@ -50,9 +50,14 @@ module.exports = (socket, io) => {
         // Обновляем данные для клиентов
         io.to(roomName).emit('updateOverlayMap', roomOverlays[roomName]);
         updateOverlayData(roomName, roomOverlays[roomName]);
+        socket.emit('buildingDataResponse', newBuilding);
         console.log(`Building placed at (${x}, ${y}) in room ${roomName} by player ${ownerId} with ID ${buildingId}.`);
     });
-
+    socket.on('subscribeBuilding', ({ buildingId }) => {
+        const playerBuildingsModule = require('./playerBuildings');
+        playerBuildingsModule.subscribeToBuilding(socket, buildingId);
+    });
+    
     socket.on('requestBuildingData', ({ roomName, buildingId }) => {
         const buildingData = roomOverlays[roomName]?.find(building => building.buildingId === buildingId);
 

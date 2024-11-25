@@ -73,7 +73,6 @@ function updateEnemyPositions(io, roomName) {
 
             const building = isBuilding(nextPosition, overlayMapData, enemy.size);
             if (building) {
-                console.log(`Enemy ${enemy.id} stopped due to building:`, building);
                 enemy.path = []; 
                 enemy.targetBuilding = building;
                 return;

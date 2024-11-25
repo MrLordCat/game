@@ -1,18 +1,17 @@
-// buildingSelectionModule.js
-
 import bottomInterfaceModule from './bottomInterface.js';
 
 const buildingSelectionModule = {
     selectedBuilding: null,
+    selectedBuildingId: null,
+
     init: function() {
         console.log("Building selection module initialized");
 
-        // Обработчик для кликов на карте
         document.getElementById('mapContainer').addEventListener('click', (event) => {
             const target = event.target;
 
             if (target.classList.contains('player')) {
-                // Если кликнули на игрока, отменяем выбор здания
+                
                 this.deselectBuilding();
             }
         });
@@ -22,12 +21,21 @@ const buildingSelectionModule = {
         this.deselectBuilding();
 
         this.selectedBuilding = buildingElement;
+        this.selectedBuildingId = buildingId;
         this.selectedBuilding.classList.add('selected-building');
 
-        // Получаем имя комнаты из gameCore и отправляем с запросом
-        const roomName = window.gameCore.lobby.roomName;
-        console.log(`Запрашиваем данные для здания с ID: ${buildingId} в комнате ${roomName}`);
-        window.socket.emit('requestBuildingData', { roomName, buildingId });
+        const buildingData = window.gameCore.playerBuildings[buildingId];
+        if (buildingData) {
+            console.log(`Получены данные для здания ${buildingId} из gameCore:`, buildingData);
+            bottomInterfaceModule.showInterface();
+            bottomInterfaceModule.updateBuildingInfo({
+                health: buildingData.health,
+                armor: buildingData.armor,
+                hasMenu: buildingData.hasMenu,
+            });
+        } else {
+            console.error(`Building data for ID ${buildingId} not found in gameCore.`);
+        }
     },
 
     deselectBuilding: function() {
@@ -35,26 +43,31 @@ const buildingSelectionModule = {
             this.selectedBuilding.classList.remove('selected-building');
             this.selectedBuilding = null;
         }
+        this.selectedBuildingId = null;
         bottomInterfaceModule.resetInterface();
     }
 };
 
-// Обработчик получения данных о здании от сервера
-window.socket.on('buildingDataResponse', (buildingData) => {
-    if (buildingData) {
-        console.log("Получены данные о здании:", buildingData); // Логируем полученные данные
-        bottomInterfaceModule.showInterface();
+// Обработчик обновлений данных здания в реальном времени
+window.socket.on('buildingDataUpdated', (buildingData) => {
+    console.log("Обновлены данные о здании:", buildingData);
+
+    // Обновляем данные здания в gameCore
+    if (buildingData.buildingId) {
+        window.gameCore.updatePlayerBuildings({
+            [buildingData.buildingId]: buildingData,
+        });
+    }
+
+    // Если это выбранное здание, обновляем интерфейс
+    if (buildingSelectionModule.selectedBuildingId === buildingData.buildingId) {
         bottomInterfaceModule.updateBuildingInfo({
             health: buildingData.health,
             armor: buildingData.armor,
             hasMenu: buildingData.hasMenu,
         });
-    } else {
-        console.error("Building data not found.");
     }
 });
-
-
 
 window.buildingSelectionModule = buildingSelectionModule;
 

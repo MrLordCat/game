@@ -17,7 +17,7 @@ const overlayMapModule = {
         document.getElementById('mapContainer').appendChild(overlayContainer);
 
         window.socket.emit('requestOverlayMap', { roomName });
-        console.log(`Overlay map initialized for room ${roomName}`);
+       // console.log(`Overlay map initialized for room ${roomName}`);
     },
 
     placeBuilding: function(x, y, building) {
@@ -28,8 +28,16 @@ const overlayMapModule = {
             console.error("Player name is not set. Cannot place building.");
             return;
         }
-    
         window.socket.emit('placeBuilding', { x, y, building, roomName, ownerId: playerName });
+        window.socket.once('buildingDataResponse', (buildingData) => {
+            if (buildingData) {
+                console.log(`Получены данные для нового здания:`, buildingData);
+                window.gameCore.updatePlayerBuildings({
+                    [buildingData.buildingId]: buildingData,
+                });
+                this.subscribeToBuilding(buildingData.buildingId);
+            }
+        });
     },
     
 
@@ -62,10 +70,16 @@ const overlayMapModule = {
                 console.log(`Building ${buildingId} owned by ${ownerId} clicked`);
                 buildingSelectionModule.selectBuilding(buildingElement, buildingId); 
             });
-            
+            window.gameCore.updatePlayerBuildings({
+                [buildingId]: { x, y, width, height, name, ownerId },
+            });
     
             overlayContainer.appendChild(buildingElement);
         });
+    },
+    subscribeToBuilding(buildingId) {
+        window.socket.emit('subscribeBuilding', { buildingId });
+        console.log(`Subscribed to building ${buildingId}`);
     }
 };
 

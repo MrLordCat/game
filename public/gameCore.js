@@ -47,7 +47,7 @@ window.gameCore = {
         this.gameSettings = { ...this.gameSettings, ...settings };
     },
     updatePlayerBuildings(buildings) {
-        this.playerBuildings = { ...buildings };
+        this.playerBuildings = { ...this.playerBuildings, ...buildings };
         console.log("Updated player buildings:", this.playerBuildings);
     },
     updateTimer(seconds) {
