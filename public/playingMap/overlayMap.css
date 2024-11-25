@@ -36,3 +36,14 @@
     border: 2px solid #43c45e;
     box-shadow: 0 0 10px rgba(0, 255, 0, 0.6), inset 0 0 6px rgba(255, 255, 255, 0.1);
 }
+.health-bar-container {
+    background-color: rgba(255, 0, 0, 0.2);
+    border: 1px solid #000;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.health-bar {
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+}

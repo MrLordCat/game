@@ -53,7 +53,7 @@ const overlayMapModule = {
             console.error('Overlay container not found. Make sure overlayMapModule.init() was called.');
             return;
         }
-        overlayContainer.innerHTML = ''; // Очищаем контейнер перед рендерингом
+        overlayContainer.innerHTML = ''; 
     
         buildings.forEach(({ x, y, width, height, name, buildingId, ownerId }) => {
             const buildingElement = document.createElement('div');
@@ -66,6 +66,7 @@ const overlayMapModule = {
             buildingElement.style.left = `${x * 10}px`;
             buildingElement.style.top = `${y * 10}px`;
     
+            
             buildingElement.addEventListener('click', () => {
                 console.log(`Building ${buildingId} owned by ${ownerId} clicked`);
                 buildingSelectionModule.selectBuilding(buildingElement, buildingId); 

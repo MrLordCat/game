@@ -47,7 +47,7 @@ const buildingSelectionModule = {
     }
 };
 
-// Обработчик обновлений данных здания в реальном времени
+
 window.socket.on('buildingDataUpdated', (buildingData) => {
 
     // Обновляем данные здания в gameCore
