@@ -14,6 +14,8 @@ const handleMap = require('./mapServer');
 const { handlePlayerMovement, updateMapData } = require('./playerMovementServer'); 
 const overlayMapServer = require('./overlayMapServer'); 
 const { updateEnemyTargets } = require('./enemyManager');
+const playerBuildings = require('./playerBuildings');
+
 
 const app = express();
 const server = http.createServer(app);
@@ -42,6 +44,8 @@ io.on('connection', (socket) => {
     playerAttributes.handleAttributes(socket);
     buildingManager.handleBuilding(socket, io);
     overlayMapServer(socket, io); 
+    playerBuildings.handleSocketEvents(socket, io);
+
     socket.on('startGame', ({ roomName }) => {
         console.log(`Game started in room ${roomName}, initializing enemy manager...`);
         enemyManager.initializeEnemyManager(io, roomName);

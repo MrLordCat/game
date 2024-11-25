@@ -1,26 +1,15 @@
 const buildingModule = require('./buildingModule');
 const { playersByRoom } = require('./playerMovementServer');
 const { getRoomMap } = require('./mapServer');
-const { updateOverlayData } = require('./playerMovementServer'); 
+const { updateOverlayData } = require('./playerMovementServer');
 const playerBuildings = require('./playerBuildings');
 
-const roomOverlays = {}; // Возвращаем roomOverlays как локальное хранилище
+const roomOverlays = {}; // Локальное хранилище данных о зданиях
 
 module.exports = (socket, io) => {
     socket.on('requestOverlayMap', ({ roomName }) => {
         if (!roomOverlays[roomName]) roomOverlays[roomName] = [];
         socket.emit('loadOverlayMap', roomOverlays[roomName]);
-    });
-
-    socket.on('requestBuildingData', ({ roomName, buildingId }) => {
-        const buildingData = playerBuildings.getBuildingById(roomName, buildingId);
-
-        if (buildingData) {
-            socket.emit('buildingDataResponse', buildingData);
-        } else {
-            console.error(`Building with ID ${buildingId} not found for room ${roomName}.`);
-            socket.emit('buildingDataResponse', null);
-        }
     });
 
     socket.on('placeBuilding', ({ roomName, x, y, building, ownerId }) => {
@@ -56,12 +45,23 @@ module.exports = (socket, io) => {
         };
 
         roomOverlays[roomName].push(newBuilding); // Добавляем здание в roomOverlays
-        playerBuildings.addBuilding(roomName, newBuilding, io); // Также синхронизируем с playerBuildings
+        playerBuildings.addBuilding(roomName, newBuilding, roomOverlays, io);
 
         // Обновляем данные для клиентов
         io.to(roomName).emit('updateOverlayMap', roomOverlays[roomName]);
-        updateOverlayData(roomName, roomOverlays[roomName]); // Обновляем overlay данные
+        updateOverlayData(roomName, roomOverlays[roomName]);
         console.log(`Building placed at (${x}, ${y}) in room ${roomName} by player ${ownerId} with ID ${buildingId}.`);
+    });
+
+    socket.on('requestBuildingData', ({ roomName, buildingId }) => {
+        const buildingData = roomOverlays[roomName]?.find(building => building.buildingId === buildingId);
+
+        if (buildingData) {
+            socket.emit('buildingDataResponse', buildingData);
+        } else {
+            console.error(`Building with ID ${buildingId} not found in room ${roomName}.`);
+            socket.emit('buildingDataResponse', null);
+        }
     });
 
     function generateBuildingId() {
@@ -69,7 +69,7 @@ module.exports = (socket, io) => {
     }
 
     function isPositionBlocked(x, y, size, mapData, players, roomName) {
-        // Проверяем пересечение с существующими зданиями
+        // Проверяем пересечение с существующими зданиями в roomOverlays
         const isOverlayBlocked = (roomOverlays[roomName] || []).some(building => {
             return (
                 x < building.x + building.width &&
@@ -112,3 +112,5 @@ module.exports = (socket, io) => {
         return false;
     }
 };
+
+module.exports.roomOverlays = roomOverlays;
