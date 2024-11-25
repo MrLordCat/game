@@ -17,6 +17,7 @@ module.exports = {
         // Синхронизация с клиентами
         io.to(roomName).emit('updateOverlayMap', roomOverlays[roomName]);
         if (socket) {
+            console.log("DATA", building)
             socket.emit('buildingDataResponse', building);
             this.subscribeToBuilding(socket, building.buildingId);
         }

@@ -38,6 +38,7 @@ module.exports = (socket, io) => {
             width: buildingData.size.width,
             height: buildingData.size.height,
             name: buildingData.name,
+            maxHealth: buildingData.maxHealth,
             health: buildingData.health,
             armor: buildingData.armor,
             hasMenu: building.hasMenu || false,
