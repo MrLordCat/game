@@ -14,6 +14,15 @@ const bottomInterfaceModule = {
 
     init: function() {
         this.hideInterface();
+        window.socket.on('sellFailed', (data) => {
+            console.error(`Sell failed: ${data.message}`);
+            this.showNotification(`Sell failed: ${data.message}`, 'error');
+        });
+
+        window.socket.on('sellSuccess', (data) => {
+            console.log(`Sell success: Building ${data.buildingId} sold`);
+            this.showNotification(`Building sold for ${data.wood} wood and ${data.gold} gold`, 'success');
+        });
     },
 
     showInterface: function() {
@@ -46,12 +55,21 @@ const bottomInterfaceModule = {
 
         if (building.hasMenu) {
             const upgradeButton = document.createElement('button');
-            upgradeButton.textContent = 'Upgrade';
+            upgradeButton.textContent = 'U';
             const repairButton = document.createElement('button');
-            repairButton.textContent = 'Repair';
+            repairButton.textContent = 'R';
+            const sellButton = document.createElement('button');
+            sellButton.textContent = 'S'; 
+    
+            sellButton.onclick = () => {
+                const roomName = window.gameCore.lobby.roomName;
+                const playerId = window.socket.id; 
+                window.socket.emit('sellBuilding', { buildingId: building.buildingId, roomName, playerId });
+            };
 
             buttonGrid.appendChild(upgradeButton);
             buttonGrid.appendChild(repairButton);
+            buttonGrid.appendChild(sellButton);
         } else {
             for (let i = 0; i < 9; i++) {
                 const emptyButton = document.createElement('button');

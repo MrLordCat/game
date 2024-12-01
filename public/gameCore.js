@@ -41,14 +41,13 @@ window.gameCore = {
         enemyData.forEach((enemy) => {
             this.enemies[enemy.id] = enemy;
         });
-        console.log("Updated enemies:", this.enemies);
     },
     updateGameSettings(settings) {
         this.gameSettings = { ...this.gameSettings, ...settings };
     },
     updatePlayerBuildings(buildings) {
         this.playerBuildings = { ...buildings };
-        console.log("Updated player buildings:", this.playerBuildings);
+
     },
     updateTimer(seconds) {
         this.gameSettings.timer = seconds;

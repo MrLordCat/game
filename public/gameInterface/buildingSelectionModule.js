@@ -45,9 +45,13 @@ const buildingSelectionModule = {
         this.selectedBuilding.classList.add('selected-building');
 
         const buildingData = window.gameCore.playerBuildings[buildingId];
+        
         if (buildingData) {
+            console.log("Building Data: ", buildingData)
             bottomInterfaceModule.showInterface();
             bottomInterfaceModule.updateBuildingInfo({
+                ownerId: buildingData.ownerId,
+                buildingId: buildingData.buildingId,
                 health: buildingData.health,
                 armor: buildingData.armor,
                 hasMenu: buildingData.hasMenu,

@@ -1,6 +1,7 @@
 const playerBuildings = {};
 const buildingSubscriptions = {}; 
-
+const buildingModule = require('./buildingModule');
+const playerResourcesServer = require('./playerResourcesServer');
 module.exports = {
     startRepair: function(socket, io, buildingId, roomName, playersByRoom, overlayMapDataByRoom) {
         const player = playersByRoom[roomName][socket.id];
@@ -29,6 +30,41 @@ module.exports = {
                 socket.emit('repairProgress', { buildingId, health: building.health, mana: player.mana });
             }
         }, 1000);
+    },
+    sellBuilding: function(socket, roomName, buildingId, roomOverlays, player, io) {
+        const building = this.getBuildingById(roomName, buildingId);
+        if (!building) {
+            socket.emit('sellFailed', { message: "Building not found" });
+            return;
+        }
+    
+        // Возвращаем ресурсы игроку
+        const buildingCost = buildingModule.getBuildingCost(building.name);
+        if (!buildingCost) {
+            console.error(`Building type ${building.name} not found in buildingModule.`);
+            socket.emit('sellFailed', { message: "Invalid building type" });
+            return;
+        }
+    
+        const playerResources = playerResourcesServer.getResources(socket.id); // Получаем ресурсы игрока
+        if (!playerResources) {
+            console.error(`Resources not found for player with socket ID ${socket.id}`);
+            socket.emit('sellFailed', { message: "Player resources not found" });
+            return;
+        }
+    
+        playerResources.wood += Math.floor(buildingCost.wood * 0.5); // Возврат 50% стоимости
+        playerResources.gold += Math.floor(buildingCost.gold * 0.5);
+    
+        // Обновляем ресурсы игрока
+        playerResourcesServer.updateResources(socket, playerResources);
+    
+        // Удаляем здание
+        this.removeBuilding(roomName, buildingId, roomOverlays, io);
+    
+        // Уведомляем клиента
+        socket.emit('sellSuccess', { buildingId, wood: buildingCost.wood * 0.5, gold: buildingCost.gold * 0.5 });
+        console.log(`Building ${buildingId} sold by player ${socket.id}`);
     },
     
     addBuilding(roomName, building, roomOverlays, io, socket)  {
@@ -68,21 +104,33 @@ module.exports = {
 
     removeBuilding(roomName, buildingId, roomOverlays, io) {
         if (!playerBuildings[roomName]) return;
-
+    
         const index = playerBuildings[roomName].findIndex(b => b.buildingId === buildingId);
         if (index !== -1) {
             const removed = playerBuildings[roomName].splice(index, 1);
-
-            // Удаляем из roomOverlays
-            const overlayIndex = roomOverlays[roomName]?.findIndex(b => b.buildingId === buildingId);
+    
+            // Проверяем, что roomOverlays[roomName] — массив
+            if (!Array.isArray(roomOverlays[roomName])) {
+                console.error(`roomOverlays[${roomName}] is not an array. Converting to structured array.`);
+    
+                // Пытаемся восстановить данные в корректной структуре
+                if (typeof roomOverlays[roomName] === 'object') {
+                    roomOverlays[roomName] = [roomOverlays[roomName]]; // Заворачиваем объект в массив
+                } else {
+                    console.error(`Invalid roomOverlays[${roomName}] structure:`, roomOverlays[roomName]);
+                    return; // Прерываем выполнение, если структура восстановить невозможно
+                }
+            }
+    
+            const overlayIndex = roomOverlays[roomName].findIndex(b => b.buildingId === buildingId);
             if (overlayIndex !== -1) {
                 roomOverlays[roomName].splice(overlayIndex, 1);
             }
-
-
+    
             io.to(roomName).emit('updateOverlayMap', roomOverlays[roomName]);
         }
-    },
+    }
+    ,
     getBuildings(roomName) {
         return playerBuildings[roomName] || [];
     },

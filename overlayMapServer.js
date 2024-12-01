@@ -43,7 +43,7 @@ module.exports = (socket, io) => {
             attackDamage: buildingData.attackDamage,
             health: buildingData.health,
             armor: buildingData.armor,
-            hasMenu: building.hasMenu || false,
+            hasMenu: true,
         };
 
         roomOverlays[roomName].push(newBuilding); // Добавляем здание в roomOverlays
@@ -70,6 +70,22 @@ module.exports = (socket, io) => {
             socket.emit('buildingDataResponse', null);
         }
     });
+    socket.on('sellBuilding', ({ buildingId, roomName, playerId }) => {
+        const roomOverlaysForRoom = roomOverlays[roomName];
+        if (!roomOverlaysForRoom) {
+            socket.emit('sellFailed', { message: "Invalid room or building" });
+            return;
+        }
+        const player = playersByRoom[roomName][playerId];
+        if (!player) {
+            socket.emit('sellFailed', { message: "Player not found" });
+            return;
+        }
+    
+        const playerBuildingsModule = require('./playerBuildings');
+        playerBuildingsModule.sellBuilding(socket, roomName, buildingId, roomOverlaysForRoom, player, io);
+    });
+    
 
     function generateBuildingId() {
         return 'building_' + Math.random().toString(36).substr(2, 9);
