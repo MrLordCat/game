@@ -31,6 +31,16 @@ const buildingModule = {
             health: 150,    
             armor: 5,
             cost: { wood: 50, gold: 0 }
+        },
+        T: {  // Башня
+            name: 'T',
+            size: { width: 2, height: 2 },
+            maxHealth: 200, 
+            health: 200,
+            armor: 20,
+            attackRadius: 20, // Радиус атаки
+            attackDamage: 15, // Урон
+            cost: { wood: 150, gold: 100 }
         }
     },
 

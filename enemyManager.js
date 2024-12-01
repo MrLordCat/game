@@ -1,7 +1,7 @@
 const { isWall, updateMapData, updateOverlayData, mapDataByRoom, overlayMapDataByRoom } = require('./playerMovementServer');
 const { aStar } = require('./pathfinding');
 const playerBuildings = require('./playerBuildings');
-
+const { attackNearbyEnemies } = require('./towerAttack');
 const enemiesByRoom = {}; 
 const enemySizeOptions = [{ width: 3, height: 3 }, { width: 4, height: 4 }];
 const spawnInterval = 10000;
@@ -53,10 +53,12 @@ function spawnEnemy(io, playerPosition, roomName) {
         position: { x: 50, y: 50 },
         size: size,
         health: 100,
+        armor: 5,
         target: 'player',
         targetPosition: playerPosition,
         path: []
     };
+    console.log(`Spawned enemy with health: ${newEnemy.health}`);
     enemiesByRoom[roomName].push(newEnemy);
     io.to(roomName).emit('newEnemy', newEnemy);
 }
@@ -64,7 +66,8 @@ function spawnEnemy(io, playerPosition, roomName) {
 function updateEnemyPositions(io, roomName) {
     const mapData = mapDataByRoom[roomName] ? JSON.parse(JSON.stringify(mapDataByRoom[roomName])) : [];
     const overlayMapData = overlayMapDataByRoom[roomName] ? JSON.parse(JSON.stringify(overlayMapDataByRoom[roomName])) : [];
-
+    const roomEnemies = enemiesByRoom[roomName];
+    const roomOverlays = overlayMapDataByRoom[roomName];
     enemiesByRoom[roomName].forEach((enemy) => {
         if (enemy.targetBuilding) {
             attackBuilding(enemy, io, roomName); // Атака здания
@@ -87,6 +90,7 @@ function updateEnemyPositions(io, roomName) {
             enemy.path = aStar(enemy.position, enemy.targetPosition, mapData, [], enemy.size);
         }
     });
+    attackNearbyEnemies(io, roomName, roomEnemies, roomOverlays);
 }
 
 function attackBuilding(enemy, io, roomName) {

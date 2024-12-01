@@ -23,6 +23,21 @@ const enemyReceiverModule = {
                 }
             });
         });
+        socket.on('enemyDamaged', (enemyUpdate) => {
+            const enemy = gameCore.enemies[enemyUpdate.id];
+            if (enemy) {
+                enemy.health = enemyUpdate.health;
+                console.log(`Enemy ${enemyUpdate.id} health updated: ${enemyUpdate.health}`);
+            }
+        });
+
+        // Новый обработчик: удаление врага
+        socket.on('enemyDefeated', (enemyId) => {
+            if (gameCore.enemies[enemyId]) {
+                delete gameCore.enemies[enemyId];
+                console.log(`Enemy ${enemyId} removed`);
+            }
+        });
     }
 };
 

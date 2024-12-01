@@ -39,6 +39,8 @@ module.exports = (socket, io) => {
             height: buildingData.size.height,
             name: buildingData.name,
             maxHealth: buildingData.maxHealth,
+            attackRadius: buildingData.attackRadius,
+            attackDamage: buildingData.attackDamage,
             health: buildingData.health,
             armor: buildingData.armor,
             hasMenu: building.hasMenu || false,

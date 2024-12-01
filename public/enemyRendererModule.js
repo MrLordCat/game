@@ -7,6 +7,16 @@ const enemyRendererModule = {
     renderEnemies: function() {
         const enemyContainer = document.getElementById('enemyContainer') || this.createEnemyContainer();
         
+        Object.keys(this.enemyElements).forEach((id) => {
+            if (!gameCore.enemies[id]) {
+                const element = this.enemyElements[id];
+                if (element && element.parentNode) {
+                    element.parentNode.removeChild(element);
+                }
+                delete this.enemyElements[id];
+                delete this.enemyPositions[id];
+            }
+        });
         Object.values(gameCore.enemies).forEach((enemy) => {
             let enemyElement = this.enemyElements[enemy.id];
             if (!enemyElement) {
