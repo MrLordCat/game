@@ -1,10 +1,18 @@
 // playerMovementServer.js
 const { aStar } = require('./pathfinding'); // Подключаем модуль поиска пути
+const playerBuildings = require('./playerBuildings');
 const playersByRoom = {}; 
 const moveIntervals = {};
 const mapDataByRoom = {}; 
 const overlayMapDataByRoom = {}; 
-
+function getPlayerRoom(socketId) {
+    for (const roomName in playersByRoom) {
+        if (playersByRoom[roomName][socketId]) {
+            return roomName;
+        }
+    }
+    return null; // Возвращает null, если игрок не найден в какой-либо комнате
+}
 function updateMapData(roomName, newMapData) {
     if (roomName) {
         mapDataByRoom[roomName] = newMapData;
@@ -22,6 +30,33 @@ function updateOverlayData(roomName, newOverlayMapData) {
         console.error("Error: roomName is undefined in updateOverlayData.");
     }
 }
+function moveToBuildingAndRepair(socket, io, buildingId, roomName) {
+    const player = playersByRoom[roomName][socket.id];
+    const roomOverlays = overlayMapDataByRoom[roomName];
+    const building = roomOverlays.find(b => b.buildingId === buildingId);
+
+    if (!building) {
+        socket.emit('repairFailed', { message: "Building not found" });
+        return;
+    }
+
+    const distance = Math.sqrt(
+        Math.pow(player.x - building.x, 2) + Math.pow(player.y - building.y, 2)
+    );
+
+    if (distance > 1) { // Если игрок не рядом
+        const path = aStar(player, { x: building.x, y: building.y }, mapDataByRoom[roomName], roomOverlays);
+        if (path.length > 0) {
+            moveAlongPath(socket, io, player, path, roomName, () => {
+                playerBuildings.startRepair(socket, io, buildingId, roomName, playersByRoom, overlayMapDataByRoom);
+            });
+        } else {
+            socket.emit('repairFailed', { message: "No path to building" });
+        }
+    } else {
+        playerBuildings.startRepair(socket, io, buildingId, roomName, playersByRoom, overlayMapDataByRoom);
+    }
+}
 
 function handlePlayerMovement(socket, io, updateEnemyTargets) {
     socket.on('initializePlayer', ({ roomName }) => {
@@ -36,7 +71,16 @@ function handlePlayerMovement(socket, io, updateEnemyTargets) {
 
         io.to(roomName).emit('updatePlayers', playersByRoom[roomName]);
     });
-
+    
+    socket.on('repairBuilding', ({ buildingId }) => {
+        const roomName = getPlayerRoom(socket.id);
+        if (roomName) {
+            moveToBuildingAndRepair(socket, io, buildingId, roomName);
+        } else {
+            socket.emit('repairFailed', { message: "Player not in a room" });
+        }
+    });
+    
     socket.on('setTargetPosition', ({ roomName, targetPosition }) => {
         if (!roomName || !playersByRoom[roomName]) {
             console.error(`Error: roomName not provided or room not found in setTargetPosition for socket ${socket.id}`);
@@ -81,7 +125,6 @@ function handlePlayerMovement(socket, io, updateEnemyTargets) {
 }
 
 function moveAlongPath(socket, io, player, path, roomName, updateEnemyTargets) {
-    console.log(`Starting movement along path for player ${socket.id}`);
     let pathIndex = 0;
 
     // Проверка наличия данных карты перед копированием

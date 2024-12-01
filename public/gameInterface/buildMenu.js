@@ -65,18 +65,35 @@ const buildMenuModule = {
                 originalButton.onclick = () => {
                     this.toggleBuildMenu();
                 };
+            } else if (text === 'R') {
+                originalButton.id = "bottomInterface_repairButton";
+                originalButton.onclick = () => {
+                    this.toggleRepairMode();
+                };
             }
         });
     },
-
+    
     toggleBuildMenu: function() {
         if (this.isOpen) {
             this.closeBuildMenu();
         } else {
             this.openBuildMenu();
         }
+    },
+    toggleRepairMode: function() {
+        window.repairMode = !window.repairMode;
+
+        const repairIndicator = document.getElementById('repairModeIndicator');
+        repairIndicator.style.display = repairMode ? 'block' : 'none';
+
+        console.log(repairMode ? "Repair mode activated" : "Repair mode deactivated");
     }
 };
+document.getElementById("bottomInterface_repairButton").addEventListener("click", () => {
+    buildMenuModule.toggleRepairMode();
+});
+
 
 document.getElementById("bottomInterface_buildButton").addEventListener("click", () => {
     buildMenuModule.toggleBuildMenu();

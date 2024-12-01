@@ -38,8 +38,8 @@ const buildingModule = {
             maxHealth: 200, 
             health: 200,
             armor: 20,
-            attackRadius: 20, // Радиус атаки
-            attackDamage: 15, // Урон
+            attackRadius: 10, // Радиус атаки
+            attackDamage: 5, // Урон
             cost: { wood: 150, gold: 100 }
         }
     },

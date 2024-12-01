@@ -1,4 +1,5 @@
 import bottomInterfaceModule from './bottomInterface.js';
+let repairMode = false;
 
 const buildingSelectionModule = {
     selectedBuilding: null,
@@ -6,6 +7,22 @@ const buildingSelectionModule = {
 
     init: function() {
         console.log("Building selection module initialized");
+
+        document.getElementById('mapContainer').addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+
+            if (window.repairMode) {
+                const target = event.target;
+
+                if (target.classList.contains('building')) {
+                    const buildingId = target.dataset.buildingId;
+                    if (buildingId) {
+                        console.log(`Repair initiated for building ${buildingId}`);
+                        this.startRepair(buildingId);
+                    }
+                }
+            }
+        });
 
         document.getElementById('mapContainer').addEventListener('click', (event) => {
             const target = event.target;
@@ -16,7 +33,10 @@ const buildingSelectionModule = {
             }
         });
     },
-
+    startRepair: function(buildingId) {
+        // Отправляем запрос на сервер для починки
+        window.socket.emit('repairBuilding', { buildingId });
+    },
     selectBuilding: function(buildingElement, buildingId) {
         this.deselectBuilding();
 

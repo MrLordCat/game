@@ -2,6 +2,35 @@ const playerBuildings = {};
 const buildingSubscriptions = {}; 
 
 module.exports = {
+    startRepair: function(socket, io, buildingId, roomName, playersByRoom, overlayMapDataByRoom) {
+        const player = playersByRoom[roomName][socket.id];
+        const roomOverlays = overlayMapDataByRoom[roomName];
+        const building = this.getBuildingById(roomName, buildingId);
+    
+        if (!building) {
+            socket.emit('repairFailed', { message: "Building not found" });
+            return;
+        }
+    
+        const repairInterval = setInterval(() => {
+            if (player.mana <= 0 || building.health >= building.maxHealth) {
+                clearInterval(repairInterval);
+                socket.emit('repairComplete', { buildingId });
+                return;
+            }
+    
+            const repairAmount = 10; // Фиксированная скорость починки
+            const repaired = this.repairBuilding(roomName, io, buildingId, repairAmount, overlayMapDataByRoom, player);
+    
+            if (!repaired) {
+                clearInterval(repairInterval);
+                socket.emit('repairFailed', { message: "Repair failed" });
+            } else {
+                socket.emit('repairProgress', { buildingId, health: building.health, mana: player.mana });
+            }
+        }, 1000);
+    },
+    
     addBuilding(roomName, building, roomOverlays, io, socket)  {
         if (!playerBuildings[roomName]) {
             playerBuildings[roomName] = [];
@@ -21,6 +50,20 @@ module.exports = {
             socket.emit('buildingDataResponse', building);
             this.subscribeToBuilding(socket, building.buildingId);
         }
+    },
+    repairBuilding(roomName, io, buildingId, repairAmount, roomOverlays, player) {
+        const building = this.getBuildingById(roomName, buildingId);
+        if (building) {
+            const maxHealth = building.maxHealth || 0;
+            building.health = Math.min(building.health + repairAmount, maxHealth);
+    
+            // Уменьшение маны игрока
+            player.mana -= Math.ceil(repairAmount / 10); // 1 мана за 10 здоровья
+    
+            this.updateBuilding(roomName, buildingId, { health: building.health }, roomOverlays, io);
+            return true;
+        }
+        return false;
     },
 
     removeBuilding(roomName, buildingId, roomOverlays, io) {

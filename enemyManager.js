@@ -96,7 +96,7 @@ function updateEnemyPositions(io, roomName) {
 function attackBuilding(enemy, io, roomName) {
     if (enemy.targetBuilding) {
         const building = enemy.targetBuilding;
-        const destroyed = playerBuildings.attackBuilding(roomName, building.buildingId, 10, overlayMapDataByRoom, io); // Наносим 10 урона
+        const destroyed = playerBuildings.attackBuilding(roomName, building.buildingId, 4, overlayMapDataByRoom, io); // Наносим 10 урона
 
         if (destroyed) {
             const overlayIndex = overlayMapDataByRoom[roomName].findIndex(b => b.buildingId === building.buildingId);
