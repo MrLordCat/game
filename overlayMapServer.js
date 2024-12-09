@@ -12,7 +12,7 @@ module.exports = (socket, io) => {
         socket.emit('loadOverlayMap', roomOverlays[roomName]);
     });
 
-    socket.on('placeBuilding', ({ roomName, x, y, building, ownerId }) => {
+    socket.on('placeBuilding', ({ roomName, x, y, building, ownerId,  }) => {
         if (!roomOverlays[roomName]) roomOverlays[roomName] = [];
 
         const mapData = getRoomMap(roomName);
@@ -47,7 +47,7 @@ module.exports = (socket, io) => {
         };
 
         roomOverlays[roomName].push(newBuilding); // Добавляем здание в roomOverlays
-        playerBuildings.addBuilding(roomName, newBuilding, roomOverlays, io);
+playerBuildings.addBuilding(socket, roomName, newBuilding, roomOverlays, io);
 
         // Обновляем данные для клиентов
         io.to(roomName).emit('updateOverlayMap', roomOverlays[roomName]);

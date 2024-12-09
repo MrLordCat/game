@@ -8,6 +8,22 @@ const buildingModule = {
             armor: 10,
             cost: { wood: 100, gold: 0 }
         },
+        R: {  // Заменяем "Research Center" на "R"
+            name: 'R',
+            size: { width: 3, height: 5 },
+            maxHealth: 500, 
+            health: 500,    
+            armor: 50,
+            cost: { wood: 300, gold: 0 }
+        },
+        G: {  // Заменяем "Gold Market" на "G"
+            name: 'G',
+            size: { width: 4, height: 4 },
+            maxHealth: 500, 
+            health: 500,    
+            armor: 50,
+            cost: { wood: 300, gold: 1 }
+        },
         M: {  // Заменяем "mainBuilding" на "M"
             name: 'M',
             size: { width: 5, height: 5 },

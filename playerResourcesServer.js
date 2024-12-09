@@ -1,47 +1,48 @@
 // playerResourcesServer.js
 
-const playersResources = {}; // Хранит ресурсы каждого игрока по их socket.id
+const playerData = require('./playerDataModule');
 
-function initializeResources() {
-    return {
+function handlePlayerResources(socket) {
+    // Инициализируем данные игрока при подключении
+    playerData.initializePlayerData(socket.id);
+    socket.emit('updateResources', playerData.getResources(socket.id));
+
+    socket.on('requestResources', () => {
+        socket.emit('updateResources', playerData.getResources(socket.id));
+    });
+
+    socket.on('modifyResources', (newResources) => {
+        playerData.updateResources(socket.id, newResources);
+        socket.emit('updateResources', playerData.getResources(socket.id));
+    });
+
+    socket.on('disconnect', () => {
+        playerData.deletePlayerData(socket.id);
+    });
+}
+
+function getResources(socketId) {
+    return playerData.getResources(socketId);
+}
+
+function updateResources(socket, resources) {
+    playerData.updateResources(socket.id, resources);
+    socket.emit('updateResources', playerData.getResources(socket.id));
+}
+
+function resetResources(socketId) {
+    const player = playerData.getPlayerData(socketId);
+    // Сбросим только ресурсы
+    player.resources = {
         gold: 1000,
         wood: 1000,
         food: { current: 0, max: 100 }
     };
 }
 
-function updateResources(socket, resources) {
-    if (playersResources[socket.id]) {
-        playersResources[socket.id] = { ...playersResources[socket.id], ...resources };
-        socket.emit('updateResources', playersResources[socket.id]);
-    }
-}
-
-function handlePlayerResources(socket) {
-    playersResources[socket.id] = initializeResources();
-    socket.emit('updateResources', playersResources[socket.id]);
-
-    socket.on('requestResources', () => {
-        socket.emit('updateResources', playersResources[socket.id]);
-    });
-
-    socket.on('modifyResources', (newResources) => {
-        updateResources(socket, newResources);
-    });
-
-    socket.on('disconnect', () => {
-        delete playersResources[socket.id];
-    });
-}
-
-// Функция для сброса ресурсов игрока к начальному значению
-function resetResources(socketId) {
-    playersResources[socketId] = initializeResources();
-}
-
 module.exports = {
     handlePlayerResources,
-    getResources: (socketId) => playersResources[socketId] || initializeResources(),
+    getResources,
     updateResources,
     resetResources
 };

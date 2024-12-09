@@ -71,9 +71,6 @@ const overlayMapModule = {
                 console.log(`Building ${buildingId} owned by ${ownerId} clicked`);
                 buildingSelectionModule.selectBuilding(buildingElement, buildingId); 
             });
-            window.gameCore.updatePlayerBuildings({
-                [buildingId]: { x, y, width, height, name, ownerId },
-            });
     
             overlayContainer.appendChild(buildingElement);
         });
